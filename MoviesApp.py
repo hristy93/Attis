@@ -21,7 +21,7 @@ def main():
     movies_metadata_dataframe = read_data(movies_metadata_file_path)
 
 if __name__ == "__main__":
-        # enables the unicode console encoding on Windows
+    # enables the unicode console encoding on Windows
     if sys.platform == "win32":
         enable_win_unicode_console()
     main()
