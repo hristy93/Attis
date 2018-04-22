@@ -9,6 +9,9 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import MultiLabelBinarizer
+import statistics as s
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
 import sys
 
 def enable_win_unicode_console():
@@ -50,7 +53,7 @@ def read_data(file_path):
     dataframe = pd.read_csv(file_path, low_memory=False)
     return dataframe
 
-def test_decission_tree(X_train, X_test, y_train, y_test):
+def test_decision_tree(X_train, X_test, y_train, y_test):
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
     max_depth=3, min_samples_leaf=5)
     clf_entropy.fit(X_train, y_train)
@@ -58,7 +61,7 @@ def test_decission_tree(X_train, X_test, y_train, y_test):
     result = accuracy_score(y_test, y_pred)
     print(result)
 
-def test_decission_tree_regression(X_train, X_test, y_train, y_test):
+def test_decision_tree_regression(X_train, X_test, y_train, y_test):
     clf_entropy = DecisionTreeRegressor(max_depth=2)
     clf_entropy.fit(X_train, y_train)
     y_pred = clf_entropy.predict(X_test)
@@ -88,39 +91,40 @@ def get_all_directors_data(credits_dataframe, movies_metadata_dataframe):
         all_directors_data.append(list(result.keys())[0]) 
     return all_directors_data
 
-def get_one_hot_multilabled_actors_dataframe(all_actors_data):
-    df = pd.DataFrame(columns=["actors"])
-    for item in all_actors_data:
-        df = df.append({"actors" :item}, ignore_index=True )
+def get_one_hot_multilabled_dataframe(data_values, column_name):
+    df = pd.DataFrame(columns=[column_name])
+    for item in data_values:
+        df = df.append({column_name :item}, ignore_index=True )
     
     mlb = MultiLabelBinarizer()
-    test = df["actors"]
-    mlb_result = mlb.fit_transform(test)
+    mlb_result = mlb.fit_transform(df[column_name])
     df1 = pd.DataFrame(mlb_result, columns=mlb.classes_, index=df.index)
-    print("One-hot mulilabled actors dataframe:")
+    print("One-hot mulilabled dataframe:")
     print(df1)
     print("\n")
     return df1
 
-def edit_float_data(float_data):
-    float_data_edited = []
-    for item in float_data:
+def edit_data_values(data_values):
+    data_values_edited = []
+    for item in data_values:
         if item.replace('.','', 1).isdigit():
-            float_data_edited.append(float(item))
+            if item == '0':
+                item = np.nan
         else:
-            item = sum(float_data_edited)/float(len(float_data_edited))
-            float_data_edited.append(float(item))
-    return float_data_edited
+            #item = sum(float_data_edited)/float(len(float_data_edited)
+            item = np.nan
+        data_values_edited.append(float(item))
+    return pd.Series(data_values_edited)
 
-def test_decission_tree(credits_dataframe, movies_metadata_dataframe):
+def test_decision_tree(credits_dataframe, movies_metadata_dataframe):
     all_popularity_data = movies_metadata_dataframe["popularity"].values
     #all_popularity_data.replace("he uses this to woo local beauty Beatrice.", 10.168437)
     #np.place(all_popularity_data, [str.isdecimal(item) for item in all_popularity_data], 10.168437)
-    all_popularity_data_edited = edit_float_data(all_popularity_data)
+    all_popularity_data_edited = edit_data_values(all_popularity_data)
     #all_popularity_data[57] = '10.168437'
     
     df1 = pd.DataFrame({"popularity": all_popularity_data_edited})
-    vote_average = edit_float_data(movies_metadata_dataframe["vote_average"].values)
+    vote_average = edit_data_values(movies_metadata_dataframe["vote_average"].values)
     df1["vote_average"] = pd.Series(vote_average)
     print(df1)
     
@@ -146,7 +150,7 @@ def test_decission_tree(credits_dataframe, movies_metadata_dataframe):
     #                                                   test_size=0.33,
     #                                                   random_state=42)
     
-    test_decission_tree_regression(X_train, X_test, y_train, y_test)
+    test_decision_tree_regression(X_train, X_test, y_train, y_test)
 
     #df_actors = df.actors
     #res1 = df_actors.str.join('|').str
@@ -160,23 +164,134 @@ def test_decission_tree(credits_dataframe, movies_metadata_dataframe):
     #test = movies_metadata_dataframe["vote_average"].values
     #print(var)
 
+def association_rules_test(dataframe, support):
+    print("\nTesting asocciation rules ...")
+    frequent_itemsets = apriori(dataframe, min_support=support, use_colnames=True)
+    print("  Frequent itemsets:")
+    print(frequent_itemsets)
+    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+    print("  Frequent itemsets:")
+    print(rules.head())
+
+def remove_movies_with_less_votes(movies_metadata_dataframe, quantile):
+    #all_votes_count = movies_metadata_dataframe["vote_count"].values.astype('int')
+    all_votes_count = movies_metadata_dataframe[movies_metadata_dataframe["vote_count"].notnull()]['vote_count'].astype('int')
+    #all_votes_count_edited = [int(item) for item in all_votes_count]
+    #average_votes_count = sum(all_votes_count_edited)/float(len(all_votes_count_edited))
+    #all_votes_count_filtered_ids = [index for index, item in enumerate(all_votes_count_edited)
+    #                               if item > average_votes_count]
+    votes_count_limit = all_votes_count.quantile(quantile)
+    print("The {0} percentile is:".format(votes_count_limit))
+    print(votes_count_limit)
+    movies_metadata_dataframe = movies_metadata_dataframe[movies_metadata_dataframe["vote_count"] > votes_count_limit]
+    remaining_movies_count = len(movies_metadata_dataframe)
+    print("The remaining movies are {0}".format(remaining_movies_count))
+    return movies_metadata_dataframe
+
+def parse_list_data_in_column(movies_metadata_dataframe, column_name, item_name):
+    data_values = movies_metadata_dataframe[column_name].fillna("[]").values
+    data_values_parsed = []
+    for item in data_values:
+        try:
+            data_values_evaluated = ast.literal_eval(item)
+            result = [item[item_name] for item in data_values_evaluated ]
+            data_values_parsed.append(result)
+        except:
+            data_values_evaluated = []
+            data_values_parsed.append([])
+    #print(data_values_parsed)
+    return pd.Series(data_values_parsed)
+
+def preprocess_movies_metadata(movies_metadata_dataframe):
+    print("\nPreprocessing movies' metadata ...")
+
+    # Print the shape of the dataframe
+    print("  Credits dataframe shape before preprocessing:")
+    print(movies_metadata_dataframe.shape)
+
+    # Removing useless columns
+    columns_to_remove = ["homepage", "imdb_id", "original_title", "overview", "poster_path",
+                        "tagline", "video"]
+    movies_metadata_dataframe = movies_metadata_dataframe.drop(columns_to_remove, axis=1)
+
+    # Removing the adult column
+    adult_movies_count = len([item for item in movies_metadata_dataframe["adult"] if item != "FALSE"])
+    print("  Removing the 'adult' column - there are just {} adult movies".format(adult_movies_count))
+    movies_metadata_dataframe = movies_metadata_dataframe.drop("adult", axis=1)
+
+    # Parsing production companies data
+    movies_metadata_dataframe["production_companies"] = parse_list_data_in_column(movies_metadata_dataframe, "production_companies", "name")
+
+    # Parsing production countries data
+    movies_metadata_dataframe["production_countries"] = parse_list_data_in_column(movies_metadata_dataframe, "production_countries", "name")
+
+    # Parsing genres countries data
+    movies_metadata_dataframe["genres"] = parse_list_data_in_column(movies_metadata_dataframe, "genres", "name")
+
+    #one_hot_multilabled_genres_dataframe =\
+    #    get_one_hot_multilabled_dataframe(movies_metadata_dataframe["genres"], "genres")
+
+    # Replace incorrect vote average values with the mean of the vote average values
+    vote_average_data = edit_data_values(movies_metadata_dataframe["vote_average"])
+    vote_average_data = vote_average_data.fillna(s.mean(vote_average_data))
+    movies_metadata_dataframe["vote_average"] = vote_average_data
+    print(movies_metadata_dataframe["vote_average"].describe())
+
+    # Replace incorrect runtime values with the mean of the runtime values
+    runtime_data = movies_metadata_dataframe["runtime"].fillna(movies_metadata_dataframe["runtime"].mean())
+    print(movies_metadata_dataframe["runtime"].describe())
+ 
+    # Print the dataframe
+    #print("Print movies' metadata dataframe:")
+    #print(movies_metadata_dataframe)
+
+    # Print the shape of the dataframe
+    print("  Credits dataframe shape after preprocessing:")
+    print("  {0}".format(movies_metadata_dataframe.shape))
+
+def preprocess_movies_credits(credits_dataframe):
+    print("\nPreprocessing credits' metadata ...")
+
+    # Make integer columns as int type
+    credits_dataframe["id"].astype("int")
+
+    # Print the movies' credits dataframe
+    #print("Print credits dataframe:")
+    #print(credits_dataframe)
+
+    # Print the shape of the dataframe
+    print("  Credits dataframe shape:")
+    print("  {0}".format(credits_dataframe.shape))
+
 def main():
     movies_metadata_test_file_path = "movies_metadata_test.csv"
     movies_metadata_file_path = "../../movies/the-movies-dataset/movies_metadata.csv"
     credits_file_path = "../../movies/the-movies-dataset/credits.csv"
     ratings_file_path = "../../movies/the-movies-dataset/ratings_small.csv"
 
+    print("Reading movies data ...")
+
     # Read the movies metadata data
-    print("Reading the movies' metadata ...")
+    print("  Reading the movies' metadata ...")
     movies_metadata_dataframe = read_data(movies_metadata_test_file_path)
 
     # Read the ratings data
-    print("Reading the movies' ratings ...")
+    print("  Reading the movies' ratings ...")
     ratings_dataframe = read_data(ratings_file_path)
 
     # Read the credits data
-    print("Reading the movies' credits ...")
+    print("  Reading the movies' credits ...")
     credits_dataframe = read_data(credits_file_path)
+
+    # Preprocesses the movies' metadata
+    preprocess_movies_metadata(movies_metadata_dataframe)
+
+    # Preprocesses the movies' credits
+    preprocess_movies_credits(credits_dataframe)
+
+    # Filters the movie's metadata on the vote count
+    #quantile = 0.75
+    #remove_movies_with_less_votes(movies_metadata_dataframe, quantile)
 
     # Gets the actors data as dict of id to name
     #movie_id = 862
@@ -199,10 +314,14 @@ def main():
 
     # Gets a n-hot mulilabled prepresentation of the actors in the movies
     #one_hot_multilabled_actors_dataframe =\
-    #    get_one_hot_multilabled_actors_dataframe(all_actors_data)
+    #    get_one_hot_multilabled_dataframe(all_actors_data, "actors")
 
-    # Tests decission tree with some data
-    #test_decission_tree(credits_dataframe, movies_metadata_dataframe)
+    # Tests association rules - NOT WORKING
+    #support = 0.6
+    #association_rules_test(one_hot_multilabled_actors_dataframe, support)
+
+    # Tests decision tree with some data
+    #test_decision_tree(credits_dataframe, movies_metadata_dataframe)
 
     # Plots a dataframe
     #plot_dataframe(movies_metadata_dataframe, "vote_count")
