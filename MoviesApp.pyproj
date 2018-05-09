@@ -37,7 +37,14 @@
     </Interpreter>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="files\the-movies-dataset\credits.csv" />
+    <Content Include="files\the-movies-dataset\movies_metadata.csv" />
+    <Content Include="files\the-movies-dataset\ratings_small.csv" />
     <Content Include="requirements.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="files\" />
+    <Folder Include="files\the-movies-dataset\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

@@ -1,4 +1,5 @@
 import ast
+import datetime
 import json
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,6 +16,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import MultiLabelBinarizer
 import statistics as s
+from dateutil.parser import parse
 import math
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
@@ -194,8 +196,14 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     df["runtime"] = movies_metadata_dataframe["runtime"]
     df["popularity"] = movies_metadata_dataframe["popularity"]
     df["is_english"] = movies_metadata_dataframe["is_english"]
-    #df["vote_average"] = movies_metadata_dataframe["vote_average"]
-    df["revenue"] = movies_metadata_dataframe["revenue"]
+    df["is_released_on_friday"] = movies_metadata_dataframe["day_of_week"].apply(lambda x: 1 if x == 4 else 0)
+    df['is_released_in_summer'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [6, 7, 8] else 0)
+
+    # Get the actors count - VERY SLOW !!!
+    #raw_cast_data = credits_dataframe["cast"]
+    #actors_count_data = [len(ast.literal_eval(item)) for item in raw_cast_data.values]
+    #df["actors_count"] = pd.Series(actors_count_data)
+ 
     genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
     df = df.join(genres_one_hot)
     print(df.isnull().any())
@@ -214,17 +222,19 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
 
     # Test 2.2
     return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    df["return"] = return_data
-    print(df[df['return'].isnull()].shape)
-    df = df[(df['return'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
-    df['return'] = df['return'].apply(lambda x: 1 if x >=1 else 0)
+    df["return_ration"] = return_data
+    print(df[df['return_ration'].isnull()].shape)
+    #rio_data = (movies_metadata_dataframe["revenue"].replace(0.0, np.nan) - movies_metadata_dataframe['budget'].replace(0.0, np.nan) ) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
+    #df["return_ration"] = rio_data
+    df = df[(df['return_ration'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
+    df['return_ration'] = df['return_ration'].apply(lambda x: 1 if x >=1 else 0)
     print(df.shape)
     print(df.isnull().any())
 
     k_fold_count = 10
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
     max_depth=3, min_samples_leaf=5)
-    get_cross_validation_score(clf_entropy, df.drop(columns="return"), df["return"])
+    get_cross_validation_score(clf_entropy, df.drop(columns="return_ration"), df["return_ration"])
 
      # Test 2.3
     #movies_metadata_dataframe["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
@@ -335,6 +345,30 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     # Print the shape of the dataframe
     print("  Movies metadata dataframe shape before preprocessing: {0}".format(movies_metadata_dataframe.shape))
 
+    # Parsing release_date data
+    print("  Prepocessing the release_date data ...")
+    release_date_data = movies_metadata_dataframe["release_date"]
+    day_of_week_data = []
+    month_data = []
+    for date in release_date_data:
+        if isinstance(date, str):
+            #day_of_week_number = datetime.datetime.strptime(date, "%m/%d/%Y").weekday()
+            parsed_date = parse(date)
+            day_of_week_number = parsed_date.weekday()
+            month_number = parsed_date.month
+            day_of_week_data.append(day_of_week_number)
+            month_data.append(month_data)
+        elif np.isnan(date):
+            day_of_week_data.append(-1)
+            month_data.append(-1)
+
+    movies_metadata_dataframe["day_of_week"] = pd.Series(day_of_week_data)
+    movies_metadata_dataframe["month"] = pd.Series(month_data)
+
+
+
+    #is_friday_data = [datetime.datetime.strptime(date, "%m/%d/%Y").weekday() if date != np.nan else -1 for date in release_date_data ]
+
     # Removing useless columns
     columns_to_remove = ["homepage", "imdb_id", "original_title", "overview", "poster_path",
                         "tagline", "video"]
@@ -433,9 +467,9 @@ def preprocess_movies_credits(credits_dataframe):
 
 def main():
     movies_metadata_test_file_path = "movies_metadata_test.csv"
-    movies_metadata_file_path = "../../movies/the-movies-dataset/movies_metadata.csv"
-    credits_file_path = "../../movies/the-movies-dataset/credits.csv"
-    ratings_file_path = "../../movies/the-movies-dataset/ratings_small.csv"
+    movies_metadata_file_path = "files/the-movies-dataset/movies_metadata.csv"
+    credits_file_path = "files/the-movies-dataset/credits.csv"
+    ratings_file_path = "files/the-movies-dataset/ratings_small.csv"
 
     print("Reading movies data ...")
 
