@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import classification_report
@@ -61,6 +62,8 @@ def read_data(file_path):
     dataframe = pd.read_csv(file_path, low_memory=False)
     return dataframe
 
+#region Test functions for algorithms
+
 def test_decision_tree(X_train, X_test, y_train, y_test):
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
     max_depth=3, min_samples_leaf=5)
@@ -71,18 +74,41 @@ def test_decision_tree(X_train, X_test, y_train, y_test):
     print("classification_report:\n", classification_report(y_test, y_pred))
     print(result)
 
-def test_decision_tree_regression(X_train, X_test, y_train, y_test):
-    clf_entropy = DecisionTreeRegressor(max_depth=2)
+def test_decision_tree_regression(X_train, X_test, y_train, y_test, max_depth=2):
+    clf_entropy = DecisionTreeRegressor(max_depth=max_depth)
     clf_entropy.fit(X_train, y_train)
     y_pred = clf_entropy.predict(X_test)
     result = math.sqrt(mean_squared_error(y_test, y_pred))
     print(result)
+
+def test_decision_tree_regression_with_cv(X, y, max_depth=2):
+    clf_entropy = DecisionTreeRegressor(max_depth=max_depth)
+    get_cross_validation_score(clf_entropy, X, y)
 
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
     reg = GradientBoostingRegressor()
     reg.fit(X_train, y_train)
     result = reg.score(X_test, y_test)
     print(result)
+
+def test_gradient_boosting_regression_with_cv(X, y):
+    gbr = GradientBoostingRegressor()
+    get_cross_validation_score(gbr, X, y)
+
+def linear_regression_test_with_cv(X, y):
+    regression_model = LinearRegression()
+    get_cross_validation_score(regression_model, X, y)
+
+def association_rules_test(dataframe, support):
+    print("\nTesting asocciation rules ...")
+    frequent_itemsets = apriori(dataframe, min_support=support, use_colnames=True)
+    print("  Frequent itemsets:")
+    print(frequent_itemsets)
+    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+    print("  Association rules:")
+    print(rules.head())
+
+#endregion
 
 def get_cross_validation_score(classificator, X, y):
     k_fold_count = 10
@@ -165,8 +191,6 @@ def edit_data_values(data_values, value_type = "int"):
     data_values_series = pd.Series(data_values_edited)
     return data_values_series
 
-
-
 def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     # Test1
     #all_popularity_data = movies_metadata_dataframe["popularity"].value   
@@ -207,9 +231,10 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
     df = df.join(genres_one_hot)
     print(df.isnull().any())
+
   
 
-    # Test 2.1
+    # Test 2.1 - NOT RELEVANT
     #average = 68787389
     #df = df[df["revenue"] != average]
     #X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
@@ -242,14 +267,14 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     #df = df[(df['revenue'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
     #print(df.shape)
     #print(df.isnull().any())
-    #X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
-    #                                                   df["revenue"],
-    #                                                   test_size=0.33,
-    #                                                   random_state=42)
-    #reg = GradientBoostingRegressor()
-    #get_cross_validation_score(reg, df.drop(columns="revenue"), df["revenue"])
-    #test_decision_tree_regression(X_train, X_test, y_train, y_test)
-    #test_gradient_boosting_regression(X_train, X_test, y_train, y_test)
+    ##X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
+    ##                                                   df["revenue"],
+    ##                                                   test_size=0.33,
+    ##                                                   random_state=42)
+    #X = df.drop(columns="revenue")
+    #y = df["revenue"]
+    #test_decision_tree_regression_with_cv(X, y)
+    #test_gradient_boosting_regression_with_cv(X, y)
     
 
     # Test 3
@@ -280,15 +305,6 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     #var = movies_metadata_dataframe["title"].fillna("")
     #test = movies_metadata_dataframe["vote_average"].values
     #print(var)
-
-def association_rules_test(dataframe, support):
-    print("\nTesting asocciation rules ...")
-    frequent_itemsets = apriori(dataframe, min_support=support, use_colnames=True)
-    print("  Frequent itemsets:")
-    print(frequent_itemsets)
-    rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
-    print("  Frequent itemsets:")
-    print(rules.head())
 
 def remove_movies_with_less_votes(movies_metadata_dataframe, quantile):
     #all_votes_count = movies_metadata_dataframe["vote_count"].values.astype('int')
@@ -364,8 +380,6 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
 
     movies_metadata_dataframe["day_of_week"] = pd.Series(day_of_week_data)
     movies_metadata_dataframe["month"] = pd.Series(month_data)
-
-
 
     #is_friday_data = [datetime.datetime.strptime(date, "%m/%d/%Y").weekday() if date != np.nan else -1 for date in release_date_data ]
 
