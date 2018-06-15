@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingClassifier;
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import accuracy_score
@@ -33,14 +34,17 @@ def enable_win_unicode_console():
         pass
 
 def plot_dataframe(dataframe, column_name):
+    """ Plots a dataframe's column by name (column_name) """
     dataframe[column_name].plot()
     plt.show()
 
 def get_ratings_by_movie_id(ratings_dataframe, movie_id):
+    """ Gets the ratings for a movie by id (movie_id) """ 
     user_ratings = ratings_dataframe[ratings_dataframe["movieId"] == movie_id]['rating']
     return user_ratings
 
 def get_actors_data_by_movie_id(credits_dataframe, movie_id):
+    """ Gets the actors data for a movie by id (movie_id) """
     raw_cast_data = credits_dataframe[credits_dataframe["id"] == int(movie_id)]["cast"]
     cast_data = ast.literal_eval(raw_cast_data.iloc[0])
     actors_data = {actor["id"]: actor["name"] for actor in cast_data}
@@ -50,6 +54,7 @@ def get_actors_data_by_movie_id(credits_dataframe, movie_id):
     return actors_data
 
 def get_directors_data_by_movie_id(credits_dataframe, movie_id):
+    """ Gets the directors data for a movie by id (movie_id) """
     raw_crew_data = credits_dataframe[credits_dataframe["id"] == int(movie_id)]["crew"]
     crew_data = ast.literal_eval(raw_crew_data.iloc[0])
     director_data = {crew["id"]: crew["name"] for crew in crew_data if crew["job"] == "Director"}
@@ -59,12 +64,17 @@ def get_directors_data_by_movie_id(credits_dataframe, movie_id):
     return director_data
 
 def read_data(file_path):
+    """ Reads the dara from a file path = file_path and returns a dataset """
     dataframe = pd.read_csv(file_path, low_memory=False)
     return dataframe
 
 #region Test functions for algorithms
 
-def test_decision_tree(X_train, X_test, y_train, y_test):
+def test_decision_tree_classification(X_train, X_test, y_train, y_test):
+    """ Tests a decision tree classification with some training 
+        (X_train, y_train) and testing (X_test, y_test) data 
+    """
+    print("\nTesting DecisionTreeClassifier ...")
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
     max_depth=3, min_samples_leaf=5)
     clf_entropy.fit(X_train, y_train)
@@ -75,6 +85,10 @@ def test_decision_tree(X_train, X_test, y_train, y_test):
     print(result)
 
 def test_decision_tree_regression(X_train, X_test, y_train, y_test, max_depth=2):
+    """ Tests a decision tree regression with some training 
+        (X_train, y_train) and testing (X_test, y_test) data 
+    """
+    print("\nTesting DecisionTreeRegressor ...")
     clf_entropy = DecisionTreeRegressor(max_depth=max_depth)
     clf_entropy.fit(X_train, y_train)
     y_pred = clf_entropy.predict(X_test)
@@ -82,24 +96,59 @@ def test_decision_tree_regression(X_train, X_test, y_train, y_test, max_depth=2)
     print(result)
 
 def test_decision_tree_regression_with_cv(X, y, max_depth=2):
+    """ Tests a decision tree regression with partial (X) and 
+        target (y) values using cross validation
+    """
+    print("\nTesting DecisionTreeRegressor with cross valdiation ...")
     clf_entropy = DecisionTreeRegressor(max_depth=max_depth)
-    get_cross_validation_score(clf_entropy, X, y)
+    show_cross_validation_score(clf_entropy, X, y)
 
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
-    reg = GradientBoostingRegressor()
-    reg.fit(X_train, y_train)
-    result = reg.score(X_test, y_test)
-    print(result)
+    """ Tests a gradient boosting regression with some some training 
+        (X_train, y_train) and testing (X_test, y_test) data 
+    """
+    print("\nTesting GradientBoostingRegressor ...")
+    gbr = GradientBoostingRegressor()
+    gbr.fit(X_train, y_train)
+    result = gbr.score(X_test, y_test)
+    print("Score: ".format(result))
 
 def test_gradient_boosting_regression_with_cv(X, y):
+    """ Tests a gradient boosting regression with partial (X) and 
+        target (y) values using cross validation
+    """
+    print("\nTesting GradientBoostingRegressor with cross valdiation ...")
     gbr = GradientBoostingRegressor()
-    get_cross_validation_score(gbr, X, y)
+    show_cross_validation_score(gbr, X, y)
+
+def test_gradient_boosting_classification(X_train, X_test, y_train, y_test, max_depth=3):
+    """ Tests a gradient boosting classification with some some training 
+        (X_train, y_train) and testing (X_test, y_test) data 
+    """
+    print("\nTesting GradientBoostingClassifier ...")
+    gbc = GradientBoostingClassifier(max_depth=max_depth)
+    gbc.fit(X_train, y_train)
+    result = gbc.score(X_test, y_test)
+    print("Score: ".format(result))
+
+def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
+    """ Tests a gradient boosting classification with partial (X) and 
+        target (y) values using cross validation
+    """
+    print("\nTesting GradientBoostingClassifier with cross valdiation ...")
+    gbc = GradientBoostingClassifier(max_depth=max_depth)
+    show_cross_validation_score(gbc, X, y)
 
 def linear_regression_test_with_cv(X, y):
+    """ Tests with liear regression with partial (X) and 
+        target (y) values using cross validation
+    """
+    print("\nTesting LinearRegression with cross valdiation ...")
     regression_model = LinearRegression()
-    get_cross_validation_score(regression_model, X, y)
+    show_cross_validation_score(regression_model, X, y)
 
 def association_rules_test(dataframe, support):
+    """ Tests association rules with support """
     print("\nTesting asocciation rules ...")
     frequent_itemsets = apriori(dataframe, min_support=support, use_colnames=True)
     print("  Frequent itemsets:")
@@ -110,16 +159,21 @@ def association_rules_test(dataframe, support):
 
 #endregion
 
-def get_cross_validation_score(classificator, X, y):
+def show_cross_validation_score(classificator, X, y):
+    """ Shows the 10-fold cross validation scores and their 
+        average using the classificator and some partial (X) 
+        and target (y) values 
+    """
     k_fold_count = 10
     scores = cross_val_score(classificator, X, y, cv=k_fold_count)
-    print("{0}-fold cross validation scores: {1}".format(k_fold_count, scores))
-    print("average score: {0}".format(s.mean(scores)))
+    print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
+    print("  Average score: {0}".format(s.mean(scores)))
 
 def soft_acc(y_true, y_pred):
     return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
 
 def get_categorical_data_encoder(data):
+    """ Gets the encoded binary data into categorical """
     le = LabelEncoder()
     le.fit(data)
     #fitted_tittle = le.transform(movies_metadata_dataframe["title"][0:4])
@@ -127,6 +181,7 @@ def get_categorical_data_encoder(data):
     return le
 
 def get_all_actors_data(credits_dataframe, movies_metadata_dataframe):
+    """ Gets the whole actors' data from the dataframes """
     movies_metadata_dataframe_ids = movies_metadata_dataframe["id"].values
     all_actors_data = list()
     for id in movies_metadata_dataframe_ids:
@@ -135,6 +190,7 @@ def get_all_actors_data(credits_dataframe, movies_metadata_dataframe):
     return all_actors_data
 
 def get_all_directors_data(credits_dataframe, movies_metadata_dataframe):
+    """ Gets the whole directors' data from the dataframes """
     movies_metadata_dataframe_ids = movies_metadata_dataframe["id"].values
     all_directors_data = list()
     for id in movies_metadata_dataframe_ids:
@@ -143,6 +199,9 @@ def get_all_directors_data(credits_dataframe, movies_metadata_dataframe):
     return all_directors_data
 
 def get_one_hot_multilabled_dataframe(data_values, column_name):
+    """ Parses the data_values into a one-hot multilabeled 
+        dataframe that can be used in the algorthms
+    """
     #df = pd.DataFrame(columns=[column_name])
     #for item in data_values:
     #    df = df.append({column_name :item}, ignore_index=True )
@@ -157,6 +216,9 @@ def get_one_hot_multilabled_dataframe(data_values, column_name):
     return df1
 
 def edit_data_values(data_values, value_type = "int"):
+    """ Edits the values of the data (data_values) depending
+        on whether their type (value_type) is int or float 
+    """
     data_values_edited = []
     for item in data_values:
         #if item == '0' or item == 0 or\
@@ -192,6 +254,7 @@ def edit_data_values(data_values, value_type = "int"):
     return data_values_series
 
 def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
+    """ Tests several (decision tree) algorithms usign some dataframes """
     # Test1
     #all_popularity_data = movies_metadata_dataframe["popularity"].value   
     #df1 = pd.DataFrame({"popularity": all_popularity_data})
@@ -222,6 +285,7 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     df["is_english"] = movies_metadata_dataframe["is_english"]
     df["is_released_on_friday"] = movies_metadata_dataframe["day_of_week"].apply(lambda x: 1 if x == 4 else 0)
     df['is_released_in_summer'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [6, 7, 8] else 0)
+    df['is_holiday'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [4, 5, 6, 11] else 0)
 
     # Get the actors count - VERY SLOW !!!
     #raw_cast_data = credits_dataframe["cast"]
@@ -232,7 +296,6 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     df = df.join(genres_one_hot)
     print(df.isnull().any())
 
-  
 
     # Test 2.1 - NOT RELEVANT
     #average = 68787389
@@ -248,7 +311,7 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     # Test 2.2
     return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
     df["return_ration"] = return_data
-    print(df[df['return_ration'].isnull()].shape)
+    #print(df[df['return_ration'].isnull()].shape)
     #rio_data = (movies_metadata_dataframe["revenue"].replace(0.0, np.nan) - movies_metadata_dataframe['budget'].replace(0.0, np.nan) ) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
     #df["return_ration"] = rio_data
     df = df[(df['return_ration'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
@@ -256,12 +319,18 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     print(df.shape)
     print(df.isnull().any())
 
+    #k_fold_count = 10
+    #X = df.drop(columns="return_ration")
+    #y = df["return_ration"]
+    #gbc = GradientBoostingClassifier(max_depth=5);
+    #show_cross_validation_score(gbc, df.drop(columns="return_ration"), df["return_ration"])
+
     k_fold_count = 10
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
     max_depth=3, min_samples_leaf=5)
-    get_cross_validation_score(clf_entropy, df.drop(columns="return_ration"), df["return_ration"])
+    show_cross_validation_score(clf_entropy, df.drop(columns="return_ration"), df["return_ration"])
 
-     # Test 2.3
+    # Test 2.3 - NEEDS IMPROVING
     #movies_metadata_dataframe["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
     #print(df[df['revenue'].isnull()].shape)
     #df = df[(df['revenue'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
@@ -290,7 +359,7 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     #                                                   test_size=0.33,
     #                                                   random_state=42)
     
-    #test_decision_tree(X_train, X_test, y_train, y_test)
+    #test_decision_tree_classification(X_train, X_test, y_train, y_test)
     #test_decision_tree_regression(X_train, X_test, y_train, y_test)
     #test_gradient_boosting_regression(X_train, X_test, y_train, y_test)
 
@@ -307,6 +376,7 @@ def test_decision_trees(credits_dataframe, movies_metadata_dataframe):
     #print(var)
 
 def remove_movies_with_less_votes(movies_metadata_dataframe, quantile):
+    """ Removes the movies with less movies than the quatile """
     #all_votes_count = movies_metadata_dataframe["vote_count"].values.astype('int')
     all_votes_count = movies_metadata_dataframe[movies_metadata_dataframe["vote_count"].notnull()]['vote_count'].astype('int')
     #all_votes_count_edited = [int(item) for item in all_votes_count]
@@ -322,6 +392,9 @@ def remove_movies_with_less_votes(movies_metadata_dataframe, quantile):
     return movies_metadata_dataframe
 
 def parse_data_in_column(movies_metadata_dataframe, column_name, item_name):
+    """ Parses the data in the column column_name which contains a list/dict
+        of value and gets the item_name's value(s)
+    """
     data_values = movies_metadata_dataframe[column_name].fillna("[]").values
     data_values_parsed = []
     for item in data_values:
@@ -339,6 +412,10 @@ def parse_data_in_column(movies_metadata_dataframe, column_name, item_name):
     return pd.Series(data_values_parsed)
 
 def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
+    """ Preprocesses the column name column_name in the dataframe.
+        It fills the invalid data with the mean of the data if full_na = true.
+        Calls the appropriate function when checking if the data is float
+    """
     # print("  Prepocessing the {0} data ...".format(column_name))
     if is_float:
         column_data = edit_data_values(dataframe[column_name], "float")
@@ -356,6 +433,7 @@ def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
     dataframe[column_name] = column_data
 
 def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
+    """ Preprocesses the movies metadata """
     print("\nPreprocessing movies' metadata ...")
 
     # Print the shape of the dataframe
@@ -464,6 +542,7 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     return movies_metadata_dataframe
 
 def preprocess_movies_credits(credits_dataframe):
+    """ Preprocesses the movies credits dataframe """
     print("\nPreprocessing credits' metadata ...")
 
     # Make integer columns as int type
