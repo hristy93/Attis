@@ -24,6 +24,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MoviesApp.py" />
+    <Compile Include="preprocessing.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="test_functions.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
