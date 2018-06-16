@@ -108,6 +108,7 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     df["genres"] = movies_metadata_dataframe["genres"].apply(lambda x: len(x))
     df["belongs_to_collection"] = movies_metadata_dataframe["belongs_to_collection"].apply(lambda x: len(x))
     df["runtime"] = movies_metadata_dataframe["runtime"]
+    #df["runtime"] = df['runtime'].fillna(df['runtime'].mean())
     df["popularity"] = movies_metadata_dataframe["popularity"]
     df["is_english"] = movies_metadata_dataframe["is_english"]
     # Released on friday - 4 == Friday
@@ -117,18 +118,14 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     # Released on hoiday - 4 == April, 5 === May, 6 == June, 11 == November
     df['is_released_on_holiday'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [4, 5, 6, 11] else 0)
     df['vote_average'] = movies_metadata_dataframe['vote_average']
-    #df['vote_average'] = df['vote_average'].fillna(movies_metadata_dataframe['vote_average'].mean())
+    #df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
     df['budget'] = movies_metadata_dataframe['budget']
     df['vote_count'] = movies_metadata_dataframe['vote_count']
+    df['year'] = movies_metadata_dataframe['year']
 
     return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    df['return_ration'] = return_data.apply(lambda x: 1 if x >=1 else 0)
-    #print(df[df['return_ration'].isnull()].shape)
-
-    # NOT USEFULL
-    #rio_data = (movies_metadata_dataframe["revenue"].replace(0.0, np.nan) - movies_metadata_dataframe['budget'].replace(0.0, np.nan) ) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    #df["return_ration"] = rio_data
-    
+    df['is_successfull'] = return_data.apply(lambda x: 1 if x >=1 else 0)
+    #print(df[df['is_successfull'].isnull()].shape)
     
     # Get the actors count - VERY SLOW !!!
     #print("  Getting the actors count data ...")
@@ -136,44 +133,35 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     #actors_count_data = [len(ast.literal_eval(item)) for item in raw_cast_data.values]
     #df["actors_count"] = pd.Series(actors_count_data)
 
-    # Get the crew count
+    # Get the crew count - VERY SLOW !!!
     #print("  Getting the crew count data ...")
     #raw_crew_data = credits_dataframe["crew"]
     #crew_count_data = [len(ast.literal_eval(item)) for item in raw_crew_data.values]
     #df["crew_count"] = pd.Series(crew_count_data)
-
-    #data_values = credits_dataframe["crew"].fillna("[]").values
-    #data_values_parsed = []
-    #for item in data_values:
-    #    try:
-    #        data_values_evaluated = ast.literal_eval(item)
-    #        result = len(data_values_evaluated)
-    #        data_values_parsed.append(result)
-    #    except:
-    #        data_values_evaluated = []
-    #        data_values_parsed.append([])
-    #credits_dataframe["crew_count"] = pd.Series(data_values_parsed)
     
+    # Adds the genres as a separate column
     genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
     df = df.join(genres_one_hot)
 
     # Filters the movies based on vote_count colum and a percetile limit
-    quantile = 0.75
+    quantile = 0.25
     df = remove_movies_with_less_votes(df, quantile)
 
-    columns_to_filter = ["return_ration", "popularity", "runtime", "vote_average"]
+    columns_to_filter = ["popularity", "runtime", "vote_average",
+                         "budget", "vote_count"]
     print("Filtering the dataframe using only the data with has no NAN value " +\
        "for the columns:\n {}".format(columns_to_filter))
     print("  Shape before filtering: ", df.shape)
-    #for item in columns_to_filter:
-    #    df = df[df[item].notnull()]
-    df = df[(df["return_ration"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
-            & (df["vote_average"].notnull()) & (df["budget"].notnull())]
+    for item in columns_to_filter:
+        #print(item, " ", df[item].isnull().sum())
+        df = df[df[item].notnull()]
+    #df = df[(df["is_successfull"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
+    #        & (df["vote_average"].notnull()) & (df["budget"].notnull())]
     print("  Shape after filtering: ", df.shape)
     
-    #print("Is any colum with NAN: ")
-    #print(df.isnull().any())
-    #print("\n")
+    print("Is any colum with NaN: ")
+    print(df.isnull().any())
+    print("\n")
 
     return df
 
@@ -213,40 +201,42 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
 
 
     # Test 2.2 - Decision tree or gradient boosting classification
-
-    #X = df.drop(columns="return_ration")
-    #y = df["return_ration"]
-
-    ##gbc = GradientBoostingClassifier(max_depth=5)
-    ##show_cross_validation_score(gbc, X, y)
-
-    #clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
-    #                                     max_depth=3, min_samples_leaf=5)
-    #show_cross_validation_score(clf_entropy, X, y)
+    X = df.drop(columns="is_successfull")
+    y = df["is_successfull"]
+    test_decision_tree_classification_with_cv(X, y)
+    test_gradient_boosting_classification_with_cv(X, y)
 
     # Plots the importance of the features - NOT WORKING
     #plt.figure(figsize=(10,12))
     #sns.barplot(x=clf.feature_importances_, y=X.columns)
 
-
-    # Test 2.3 - Regression tree or boosting - NEEDS IMPROVEMENTS
-
-    df["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
+    # Test 2.3 - Regression tree, liear regression and boosting - NEEDS IMPROVEMENTS
+   df["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
     print(df[df['revenue'].isnull()].shape)
     df = df[(df['revenue'].notnull())]
     print("The shape of the dataframe is: ", df.shape)
+    print("Is any colum with NaN: ")
     print(df.isnull().any())
+    print("\n")
     #X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
     #                                                   df["revenue"],
     #                                                   test_size=0.33,
     #                                                   random_state=42)
     X = df.drop(columns="revenue")
     y = df["revenue"]
+    linear_regression_test_with_cv(X, y)
     test_decision_tree_regression_with_cv(X, y)
     test_gradient_boosting_regression_with_cv(X, y)
+
+    # Test 2.4 - Association rules - NOT WORKING (the frequest-items datagrame is empty)
+    # The data should be one-hot !!!
+    #support = 0.6
+    #pd.set_option('max_columns', 10)
+    #genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
+    #association_rules_test(genres_one_hot, support)
     
 
-    # Test 3
+    # Test 3 - NOT RELEVANT
     #one_hot_multilabled_actors_dataframe["vote_average"] = pd.Series(vote_average)
     #one_hot_multilabled_actors_dataframe["popularity"] = all_popularity_data_edited
     #X_train, X_test, y_train, y_test = train_test_split(one_hot_multilabled_actors_dataframe.drop(columns="popularity"),

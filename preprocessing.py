@@ -95,6 +95,7 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     release_date_data = movies_metadata_dataframe["release_date"]
     day_of_week_data = []
     month_data = []
+    year_data = []
     for date in release_date_data:
         if isinstance(date, str):
             #day_of_week_number = datetime.datetime.strptime(date, "%m/%d/%Y").weekday()
@@ -103,25 +104,24 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
             month_number = parsed_date.month
             day_of_week_data.append(day_of_week_number)
             month_data.append(month_data)
+            year = parsed_date.year;
+            year_data.append(year)
         elif np.isnan(date):
             day_of_week_data.append(-1)
             month_data.append(-1)
+            year_data.append(-1)
 
     movies_metadata_dataframe["day_of_week"] = pd.Series(day_of_week_data)
     movies_metadata_dataframe["month"] = pd.Series(month_data)
+    movies_metadata_dataframe["year"] = pd.Series(year_data)
 
     #is_friday_data = [datetime.datetime.strptime(date, "%m/%d/%Y").weekday() if date != np.nan else -1 for date in release_date_data ]
 
     # Removing useless columns
     columns_to_remove = ["homepage", "imdb_id", "original_title", "overview", "poster_path",
-                        "tagline", "video"]
+                         "tagline", "video", "adult"]
     print("  Removing useless columns : {0}".format(columns_to_remove))
     movies_metadata_dataframe = movies_metadata_dataframe.drop(columns_to_remove, axis=1)
-
-    # Removing the adult column
-    adult_movies_count = len([item for item in movies_metadata_dataframe["adult"] if item != "FALSE"])
-    print("  Removing the 'adult' column - there are just {} adult movies".format(adult_movies_count))
-    movies_metadata_dataframe = movies_metadata_dataframe.drop("adult", axis=1)
 
     # Parsing production_companies data
     print("  Preprocessing the production_companies data ...")

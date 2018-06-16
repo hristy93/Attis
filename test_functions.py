@@ -32,22 +32,31 @@ def test_decision_tree_classification(X_train, X_test, y_train, y_test):
         (X_train, y_train) and testing (X_test, y_test) data 
     """
     print("\nTesting DecisionTreeClassifier ...")
-    clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
-    max_depth=3, min_samples_leaf=5)
-    clf_entropy.fit(X_train, y_train)
+    dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
+        max_depth=3, min_samples_leaf=5)
+    dtc_entropy.fit(X_train, y_train)
     y_pred = clf_entropy.predict(X_test)
     result = accuracy_score(y_test, y_pred)
-    print("accuracy_score: ", accuracy_score(y_test, y_pred))
-    print("classification_report:\n", classification_report(y_test, y_pred))
+    print("Accuracy_score: ", accuracy_score(y_test, y_pred))
+    print("Classification_report:\n", classification_report(y_test, y_pred))
     print(result)
+
+def test_decision_tree_classification_with_cv(X, y):
+    """ Tests a decision tree classification with partial (X) and 
+        target (y) values using cross validation
+    """
+    print("\nTesting DecisionTreeClassifier with cross valdiation ...")
+    dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
+        max_depth=2, min_samples_leaf=2)
+    show_cross_validation_score(dtc_entropy, X, y)
 
 def test_decision_tree_regression(X_train, X_test, y_train, y_test, max_depth=2):
     """ Tests a decision tree regression with some training 
         (X_train, y_train) and testing (X_test, y_test) data 
     """
     print("\nTesting DecisionTreeRegressor ...")
-    clf_entropy = DecisionTreeRegressor(max_depth=max_depth)
-    clf_entropy.fit(X_train, y_train)
+    dtr_entropy = DecisionTreeRegressor(max_depth=max_depth)
+    dtr_entropy.fit(X_train, y_train)
     y_pred = clf_entropy.predict(X_test)
     result = math.sqrt(mean_squared_error(y_test, y_pred))
     print(result)
@@ -57,8 +66,8 @@ def test_decision_tree_regression_with_cv(X, y, max_depth=2):
         target (y) values using cross validation
     """
     print("\nTesting DecisionTreeRegressor with cross valdiation ...")
-    clf_entropy = DecisionTreeRegressor(max_depth=max_depth)
-    show_cross_validation_score(clf_entropy, X, y)
+    dtr_entropy = DecisionTreeRegressor(max_depth=max_depth)
+    show_cross_validation_score(dtr_entropy, X, y)
 
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
     """ Tests a gradient boosting regression with some some training 
@@ -104,13 +113,22 @@ def linear_regression_test_with_cv(X, y):
     regression_model = LinearRegression()
     show_cross_validation_score(regression_model, X, y)
 
-def association_rules_test(dataframe, support):
+def association_rules_test(dataframe, support=0.6):
     """ Tests association rules with support """
     print("\nTesting asocciation rules ...")
     frequent_itemsets = apriori(dataframe, min_support=support, use_colnames=True)
+    frequent_itemsets['length'] = frequent_itemsets['itemsets'].apply(lambda x: len(x))
     print("  Frequent itemsets:")
     print(frequent_itemsets)
     rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
     print("  Association rules:")
     print(rules.head())
+    refined_frequent_itemsets = frequent_itemsets[(frequent_itemsets['length'] == 2) &
+                                (frequent_itemsets['support'] >= 0.8) ]
+    print("  Refined frequent itemsets:")
+    print(refined_frequent_itemsets)
+    refined_rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+    print("  Refined association rules:")
+    print(refined_rules.head())
+
 
