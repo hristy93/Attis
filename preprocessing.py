@@ -1,3 +1,4 @@
+import ast
 import numpy as np
 import pandas as pd
 from dateutil.parser import parse
@@ -154,6 +155,13 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     #vote_average_data = movies_metadata_dataframe["vote_average"].astype("float")
     preprocess_dataset_column(movies_metadata_dataframe, "vote_average", True, fill_na)
     #print(movies_metadata_dataframe["vote_average"].describe())
+
+    # Preprocessing the vote_count data
+    print("  Preprocessing the vote_count data ...")
+    preprocess_dataset_column(movies_metadata_dataframe, "vote_count", False, fill_na)
+    #print(runtime_data.isnull().any())
+    #print(runtime_data.isnull())
+    #print(movies_metadata_dataframe["runtime"].describe())
 
     # Preprocessing the runtime data
     print("  Preprocessing the revenue data ...")

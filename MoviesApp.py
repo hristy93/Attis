@@ -4,6 +4,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier;
@@ -76,7 +77,7 @@ def show_cross_validation_score(classificator, X, y):
         and target (y) values 
     """
     k_fold_count = 10
-    scores = cross_val_score(classificator, X, y, cv=k_fold_count)
+    scores = cross_val_score(classificator, X, y, cv=k_fold_count, n_jobs=-1)
     print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
     print("  Average score: {0}".format(s.mean(scores)))
 
@@ -126,8 +127,9 @@ def get_one_hot_multilabled_dataframe(data_values, column_name):
     #print("\n")
     return df1
 
-def create_testing_dataframe(movies_metadata_dataframe):
+def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     """ Creates a dataframe for testing """
+    print("\nCreating a testing dataframe for the algorithms ...")
     df = pd.DataFrame()
     df["production_companies"] = movies_metadata_dataframe["production_companies"].apply(lambda x: len(x))
     df["production_countries"] = movies_metadata_dataframe["production_countries"].apply(lambda x: len(x))
@@ -136,21 +138,75 @@ def create_testing_dataframe(movies_metadata_dataframe):
     df["runtime"] = movies_metadata_dataframe["runtime"]
     df["popularity"] = movies_metadata_dataframe["popularity"]
     df["is_english"] = movies_metadata_dataframe["is_english"]
+    # Released on friday - 4 == Friday
     df["is_released_on_friday"] = movies_metadata_dataframe["day_of_week"].apply(lambda x: 1 if x == 4 else 0)
+    # Released in summer - 6 == June, 7 == July, 8 == August
     df['is_released_in_summer'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [6, 7, 8] else 0)
-    df['is_holiday'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [4, 5, 6, 11] else 0)
+    # Released on hoiday - 4 == April, 5 === May, 6 == June, 11 == November
+    df['is_released_on_holiday'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [4, 5, 6, 11] else 0)
+    df['vote_average'] = movies_metadata_dataframe['vote_average']
+    #df['vote_average'] = df['vote_average'].fillna(movies_metadata_dataframe['vote_average'].mean())
+    df['budget'] = movies_metadata_dataframe['budget']
+    df['vote_count'] = movies_metadata_dataframe['vote_count']
+
+    return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
+    df['return_ration'] = return_data.apply(lambda x: 1 if x >=1 else 0)
+    #print(df[df['return_ration'].isnull()].shape)
+
+    # NOT USEFULL
+    #rio_data = (movies_metadata_dataframe["revenue"].replace(0.0, np.nan) - movies_metadata_dataframe['budget'].replace(0.0, np.nan) ) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
+    #df["return_ration"] = rio_data
+    
     
     # Get the actors count - VERY SLOW !!!
+    #print("  Getting the actors count data ...")
     #raw_cast_data = credits_dataframe["cast"]
     #actors_count_data = [len(ast.literal_eval(item)) for item in raw_cast_data.values]
     #df["actors_count"] = pd.Series(actors_count_data)
+
+    # Get the crew count
+    #print("  Getting the crew count data ...")
+    #raw_crew_data = credits_dataframe["crew"]
+    #crew_count_data = [len(ast.literal_eval(item)) for item in raw_crew_data.values]
+    #df["crew_count"] = pd.Series(crew_count_data)
+
+    #data_values = credits_dataframe["crew"].fillna("[]").values
+    #data_values_parsed = []
+    #for item in data_values:
+    #    try:
+    #        data_values_evaluated = ast.literal_eval(item)
+    #        result = len(data_values_evaluated)
+    #        data_values_parsed.append(result)
+    #    except:
+    #        data_values_evaluated = []
+    #        data_values_parsed.append([])
+    #credits_dataframe["crew_count"] = pd.Series(data_values_parsed)
     
     genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
     df = df.join(genres_one_hot)
+
+    # Filters the movies based on vote_count colum and a percetile limit
+    quantile = 0.8
+    df = remove_movies_with_less_votes(df, quantile)
+
+    #print("Is any colum with NAN: ")
+    #print(df.isnull().any())
+    #print("\n")
+
+    columns_to_filter = ["return_ration", "popularity", "runtime", "vote_average"]
+    print("Filtering the dataframe using only the data with has no NAN value " +\
+       "for the columns:\n {}".format(columns_to_filter))
+    print("  Shape before filtering: ", df.shape)
+    #for item in columns_to_filter:
+    #    df = df[df[item].notnull()]
+    df = df[(df["return_ration"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
+            & (df["vote_average"].notnull())]
+    print("  Shape after filtering: ", df.shape)
     print(df.isnull().any())
+
     return df
 
-def test_algorithms(credits_dataframe, movies_metadata_dataframe):
+def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     """ Tests several (decision tree) algorithms usign some dataframes """
     # Test1
     #all_popularity_data = movies_metadata_dataframe["popularity"].value   
@@ -172,7 +228,7 @@ def test_algorithms(credits_dataframe, movies_metadata_dataframe):
 
 
     # Test 2
-    df = create_testing_dataframe(movies_metadata_dataframe)
+    df = create_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
 
     # Test 2.1 - NOT RELEVANT
     #average = 68787389
@@ -185,29 +241,24 @@ def test_algorithms(credits_dataframe, movies_metadata_dataframe):
     #test_gradient_boosting_regression(X_train, X_test, y_train, y_test)
 
 
-    # Test 2.2
-    return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    df["return_ration"] = return_data
-    #print(df[df['return_ration'].isnull()].shape)
-    #rio_data = (movies_metadata_dataframe["revenue"].replace(0.0, np.nan) - movies_metadata_dataframe['budget'].replace(0.0, np.nan) ) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    #df["return_ration"] = rio_data
-    df = df[(df['return_ration'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
-    df['return_ration'] = df['return_ration'].apply(lambda x: 1 if x >=1 else 0)
-    print(df.shape)
-    print(df.isnull().any())
+    # Test 2.2 - Decision tree or gradient boosting classification
 
-    #k_fold_count = 10
-    #X = df.drop(columns="return_ration")
-    #y = df["return_ration"]
     #gbc = GradientBoostingClassifier(max_depth=5);
     #show_cross_validation_score(gbc, df.drop(columns="return_ration"), df["return_ration"])
 
-    k_fold_count = 10
+    X = df.drop(columns="return_ration")
+    y = df["return_ration"]
+
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
     max_depth=3, min_samples_leaf=5)
     show_cross_validation_score(clf_entropy, df.drop(columns="return_ration"), df["return_ration"])
 
-    # Test 2.3 - NEEDS IMPROVING
+    # Plots the importance of the features - NOT WORKING
+    #plt.figure(figsize=(10,12))
+    #sns.barplot(x=clf.feature_importances_, y=X.columns)
+
+
+    # Test 2.3 - Regression tree or boosting - NEEDS IMPROVEMENTS
     #movies_metadata_dataframe["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
     #print(df[df['revenue'].isnull()].shape)
     #df = df[(df['revenue'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
@@ -240,6 +291,8 @@ def test_algorithms(credits_dataframe, movies_metadata_dataframe):
     #test_decision_tree_regression(X_train, X_test, y_train, y_test)
     #test_gradient_boosting_regression(X_train, X_test, y_train, y_test)
 
+    # Other old tests - NOT RELEVANT
+
     #df_actors = df.actors
     #res1 = df_actors.str.join('|').str
     #res2 = res1.get_dummies()
@@ -252,24 +305,22 @@ def test_algorithms(credits_dataframe, movies_metadata_dataframe):
     #test = movies_metadata_dataframe["vote_average"].values
     #print(var)
 
-def remove_movies_with_less_votes(movies_metadata_dataframe, quantile):
-    """ Removes the movies with less movies than the quatile """
+def remove_movies_with_less_votes(dataframe, percentile):
+    """ Removes the movies with less vote count than the percentile """
+    print("Filtering the movies with less vote count than the percentile = {} ...".format(percentile))
     #all_votes_count = movies_metadata_dataframe["vote_count"].values.astype('int')
-    all_votes_count = movies_metadata_dataframe[movies_metadata_dataframe["vote_count"].notnull()]['vote_count'].astype('int')
+    all_votes_count = dataframe[dataframe["vote_count"].notnull()]['vote_count'].astype('int')
     #all_votes_count_edited = [int(item) for item in all_votes_count]
     #average_votes_count = sum(all_votes_count_edited)/float(len(all_votes_count_edited))
     #all_votes_count_filtered_ids = [index for index, item in enumerate(all_votes_count_edited)
     #                               if item > average_votes_count]
-    votes_count_limit = all_votes_count.quantile(quantile)
-    print("The {0} percentile is:".format(votes_count_limit))
-    print(votes_count_limit)
-    movies_metadata_dataframe = movies_metadata_dataframe[movies_metadata_dataframe["vote_count"] > votes_count_limit]
-    remaining_movies_count = len(movies_metadata_dataframe)
-    print("The remaining movies are {0}".format(remaining_movies_count))
-    return movies_metadata_dataframe
-
-def test():
-    pass;
+    votes_count_limit = all_votes_count.quantile(percentile)
+    print("  The {0} percentile of all vote counts: {1}".format(percentile, votes_count_limit))
+    #print(votes_count_limit)
+    print("  The movies count before filtering: {0}".format(len(dataframe)))
+    dataframe = dataframe[dataframe["vote_count"] > votes_count_limit]
+    print("  The movies after filtering: {0}".format(len(dataframe)))
+    return dataframe
 
 def main():
     movies_metadata_test_file_path = "movies_metadata_test.csv"
@@ -329,7 +380,7 @@ def main():
     #association_rules_test(one_hot_multilabled_actors_dataframe, support)
 
     # Tests decision tree with some data
-    test_algorithms(credits_dataframe, movies_metadata_dataframe)
+    test_algorithms(movies_metadata_dataframe, credits_dataframe)
 
     # Plots a dataframe
     #plot_dataframe(movies_metadata_dataframe, "vote_count")
