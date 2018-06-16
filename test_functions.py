@@ -1,4 +1,31 @@
-#region Test functions for algorithms
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import classification_report
+from sklearn.model_selection import KFold
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
+import statistics as s
+import math
+
+def show_cross_validation_score(classificator, X, y):
+    """ Shows the 10-fold cross validation scores and their 
+        average using the classificator and some partial (X) 
+        and target (y) values 
+    """
+    k_fold_count = 10
+    scores = cross_val_score(classificator, X, y, cv=k_fold_count, n_jobs=-1)
+    print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
+    print("  Average score: {0}".format(s.mean(scores)))
+
+def soft_acc(y_true, y_pred):
+    return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
 
 def test_decision_tree_classification(X_train, X_test, y_train, y_test):
     """ Tests a decision tree classification with some training 
@@ -86,6 +113,4 @@ def association_rules_test(dataframe, support):
     rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
     print("  Association rules:")
     print(rules.head())
-
-#endregion
 

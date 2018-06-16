@@ -5,23 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import GradientBoostingClassifier;
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import classification_report
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import MultiLabelBinarizer
-import statistics as s
-import math
-from mlxtend.frequent_patterns import apriori
-from mlxtend.frequent_patterns import association_rules
 import sys
 
 from test_functions import *;
@@ -70,19 +55,6 @@ def read_data(file_path):
     """ Reads the dara from a file path = file_path and returns a dataset """
     dataframe = pd.read_csv(file_path, low_memory=False)
     return dataframe
-
-def show_cross_validation_score(classificator, X, y):
-    """ Shows the 10-fold cross validation scores and their 
-        average using the classificator and some partial (X) 
-        and target (y) values 
-    """
-    k_fold_count = 10
-    scores = cross_val_score(classificator, X, y, cv=k_fold_count, n_jobs=-1)
-    print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
-    print("  Average score: {0}".format(s.mean(scores)))
-
-def soft_acc(y_true, y_pred):
-    return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
 
 def get_categorical_data_encoder(data):
     """ Gets the encoded binary data into categorical """
@@ -186,12 +158,8 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     df = df.join(genres_one_hot)
 
     # Filters the movies based on vote_count colum and a percetile limit
-    quantile = 0.8
+    quantile = 0.75
     df = remove_movies_with_less_votes(df, quantile)
-
-    #print("Is any colum with NAN: ")
-    #print(df.isnull().any())
-    #print("\n")
 
     columns_to_filter = ["return_ration", "popularity", "runtime", "vote_average"]
     print("Filtering the dataframe using only the data with has no NAN value " +\
@@ -200,9 +168,12 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     #for item in columns_to_filter:
     #    df = df[df[item].notnull()]
     df = df[(df["return_ration"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
-            & (df["vote_average"].notnull())]
+            & (df["vote_average"].notnull()) & (df["budget"].notnull())]
     print("  Shape after filtering: ", df.shape)
-    print(df.isnull().any())
+    
+    #print("Is any colum with NAN: ")
+    #print(df.isnull().any())
+    #print("\n")
 
     return df
 
@@ -243,15 +214,15 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
 
     # Test 2.2 - Decision tree or gradient boosting classification
 
-    #gbc = GradientBoostingClassifier(max_depth=5);
-    #show_cross_validation_score(gbc, df.drop(columns="return_ration"), df["return_ration"])
+    #X = df.drop(columns="return_ration")
+    #y = df["return_ration"]
 
-    X = df.drop(columns="return_ration")
-    y = df["return_ration"]
+    ##gbc = GradientBoostingClassifier(max_depth=5)
+    ##show_cross_validation_score(gbc, X, y)
 
-    clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
-    max_depth=3, min_samples_leaf=5)
-    show_cross_validation_score(clf_entropy, df.drop(columns="return_ration"), df["return_ration"])
+    #clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
+    #                                     max_depth=3, min_samples_leaf=5)
+    #show_cross_validation_score(clf_entropy, X, y)
 
     # Plots the importance of the features - NOT WORKING
     #plt.figure(figsize=(10,12))
@@ -259,19 +230,20 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
 
 
     # Test 2.3 - Regression tree or boosting - NEEDS IMPROVEMENTS
-    #movies_metadata_dataframe["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
-    #print(df[df['revenue'].isnull()].shape)
-    #df = df[(df['revenue'].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())]
-    #print(df.shape)
-    #print(df.isnull().any())
-    ##X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
-    ##                                                   df["revenue"],
-    ##                                                   test_size=0.33,
-    ##                                                   random_state=42)
-    #X = df.drop(columns="revenue")
-    #y = df["revenue"]
-    #test_decision_tree_regression_with_cv(X, y)
-    #test_gradient_boosting_regression_with_cv(X, y)
+
+    df["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
+    print(df[df['revenue'].isnull()].shape)
+    df = df[(df['revenue'].notnull())]
+    print("The shape of the dataframe is: ", df.shape)
+    print(df.isnull().any())
+    #X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
+    #                                                   df["revenue"],
+    #                                                   test_size=0.33,
+    #                                                   random_state=42)
+    X = df.drop(columns="revenue")
+    y = df["revenue"]
+    test_decision_tree_regression_with_cv(X, y)
+    test_gradient_boosting_regression_with_cv(X, y)
     
 
     # Test 3

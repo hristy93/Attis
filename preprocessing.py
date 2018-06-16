@@ -9,9 +9,9 @@ def edit_data_values(data_values, value_type = "int"):
     """
     data_values_edited = []
     for item in data_values:
-        #if item == '0' or item == 0 or\
-        #   item == 0.0 or math.isnan(item):
-        #   item = np.nan
+        # Makes all data with the value of 0 to be NaN
+        if item == '0' or item == 0 or item == 0.0:
+           item = np.nan
         if isinstance(item, str):
             if value_type == "float":
                 if item.replace('.','', 1).isdigit():
@@ -73,6 +73,7 @@ def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
         column_data = edit_data_values(dataframe[column_name])
 
     if fill_na:
+        # Fills the NaN values with the mean of all values in the column
         column_data_mean = column_data[column_data != np.nan].mean()
         column_data = column_data.fillna(column_data_mean)
         #if is_float:
