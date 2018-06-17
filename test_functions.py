@@ -3,16 +3,25 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import classification_report
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
+import matplotlib.pyplot as plt
+import seaborn as sns
 import statistics as s
 import math
+
+def get_best_estmator(estimator, parameters, X, y):
+    gscv = GridSearchCV(estimator, parameters, return_train_score=True)
+    best_estimator = gscv.fit(X, y)
+    return best_estimator
 
 def show_cross_validation_score(classificator, X, y):
     """ Shows the 10-fold cross validation scores and their 
@@ -50,6 +59,12 @@ def test_decision_tree_classification_with_cv(X, y):
         max_depth=2, min_samples_leaf=2)
     show_cross_validation_score(dtc_entropy, X, y)
 
+    #parameters = {"criterion":("entropy", "gini"), "min_samples_leaf":[1, 10],
+    #             "min_samples_split":[2, 10], "max_depth":[2, 10]}
+    #best_estimator = get_best_estmator(dtc_entropy, parameters, X, y)
+    #print("  Scores after hyper-parameter optimizer:")
+    #show_cross_validation_score(best_estimator, X, y)
+
 def test_decision_tree_regression(X_train, X_test, y_train, y_test, max_depth=2):
     """ Tests a decision tree regression with some training 
         (X_train, y_train) and testing (X_test, y_test) data 
@@ -68,6 +83,13 @@ def test_decision_tree_regression_with_cv(X, y, max_depth=2):
     print("\nTesting DecisionTreeRegressor with cross valdiation ...")
     dtr_entropy = DecisionTreeRegressor(max_depth=max_depth)
     show_cross_validation_score(dtr_entropy, X, y)
+
+    #parameters = {"criterion":("mse", "mae", "friedman_mse"), "min_samples_leaf":[1, 10],
+    #             "min_samples_split":[2, 10], "max_depth":[2, 10]}
+    #best_estimator = get_best_estmator(dtr_entropy, parameters, X, y)
+    #print("  Scores after hyper-parameter optimizer:")
+    #show_cross_validation_score(best_estimator, X, y)
+
 
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
     """ Tests a gradient boosting regression with some some training 
@@ -97,6 +119,10 @@ def test_gradient_boosting_classification(X_train, X_test, y_train, y_test, max_
     result = gbc.score(X_test, y_test)
     print("Score: ".format(result))
 
+    # Plots the importance of the features - NOT WORKING
+    plt.figure(figsize=(15,20))
+    sns.barplot(x=gbc.feature_importances_, y=X_train.columns)
+
 def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
     """ Tests a gradient boosting classification with partial (X) and 
         target (y) values using cross validation
@@ -105,7 +131,7 @@ def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
     gbc = GradientBoostingClassifier(max_depth=max_depth)
     show_cross_validation_score(gbc, X, y)
 
-def linear_regression_test_with_cv(X, y):
+def test_linear_regression_with_cv(X, y):
     """ Tests with liear regression with partial (X) and 
         target (y) values using cross validation
     """
@@ -113,7 +139,7 @@ def linear_regression_test_with_cv(X, y):
     regression_model = LinearRegression()
     show_cross_validation_score(regression_model, X, y)
 
-def association_rules_test(dataframe, support=0.6):
+def test_association_rules(dataframe, support=0.6):
     """ Tests association rules with support """
     print("\nTesting asocciation rules ...")
     frequent_itemsets = apriori(dataframe, min_support=support, use_colnames=True)

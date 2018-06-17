@@ -22,7 +22,9 @@ def enable_win_unicode_console():
         pass
 
 def plot_dataframe(dataframe, column_name):
-    """ Plots a dataframe's column by name (column_name) """
+    """ Plots a dataframe's column by name (column_name) 
+        with numeric values
+    """
     dataframe[column_name].plot()
     plt.show()
 
@@ -229,12 +231,15 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     print("Predicting the success of the movies using classification ...")
     X = df.drop(columns="is_successfull")
     y = df["is_successfull"]
+
     test_decision_tree_classification_with_cv(X, y)
     test_gradient_boosting_classification_with_cv(X, y)
 
-    # Plots the importance of the features - NOT WORKING
-    #plt.figure(figsize=(10,12))
-    #sns.barplot(x=clf.feature_importances_, y=X.columns)
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                       test_size=0.33,
+                                                       random_state=42)
+
+    test_gradient_boosting_classification(X_train, X_test, y_train, y_test)
 
     # Test 2.3 - Regression tree, liear regression and boosting - NEEDS IMPROVEMENTS
     print("\nPredicting revenue using regression ...")
@@ -254,7 +259,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     #                                                   random_state=42)
     X = df.drop(columns="revenue")
     y = df["revenue"]
-    linear_regression_test_with_cv(X, y)
+    test_linear_regression_with_cv(X, y)
     test_decision_tree_regression_with_cv(X, y)
     test_gradient_boosting_regression_with_cv(X, y)
 
@@ -263,7 +268,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     #support = 0.6
     #pd.set_option('max_columns', 10)
     #genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
-    #association_rules_test(genres_one_hot, support)
+    #test_association_rules(genres_one_hot, support)
     
 
     # Test 3 - NOT RELEVANT
