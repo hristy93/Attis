@@ -99,6 +99,16 @@ def get_one_hot_multilabled_dataframe(data_values, column_name):
     #print("\n")
     return df1
 
+def show_columns_with_nan(dataframe):
+    """ Prints the columns names of the dataframe which have NaN values"""
+    print("  Is any column with NaN: ")
+    columns_with_nan = dataframe.columns[dataframe.isnull().any()]
+    if columns_with_nan != []:
+        print(dataframe.columns[dataframe.isnull().any()])
+        print("\n")
+    else:
+        print("    No")
+
 def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     """ Creates a dataframe for testing """
     print("\nCreating a testing dataframe for the algorithms ...")
@@ -118,6 +128,7 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     # Released on hoiday - 4 == April, 5 === May, 6 == June, 11 == November
     df['is_released_on_holiday'] = movies_metadata_dataframe['month'].apply(lambda x: 1 if x in [4, 5, 6, 11] else 0)
     df['vote_average'] = movies_metadata_dataframe['vote_average']
+    #df['vote_average'].replace(np.nan, 0.0, inplace=True)
     #df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
     df['budget'] = movies_metadata_dataframe['budget']
     df['vote_count'] = movies_metadata_dataframe['vote_count']
@@ -143,25 +154,39 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
     df = df.join(genres_one_hot)
 
-    # Filters the movies based on vote_count colum and a percetile limit
-    quantile = 0.25
-    df = remove_movies_with_less_votes(df, quantile)
+    # Filters the movies based on vote_count colum and a percentile limit - NOT VERY USEFUL
+    #percentile = 0.25
+    #df = remove_movies_with_less_votes(df, percentile)
+
+    # Filtering the budget using only the values 
+    # greater than some percetile of the data - NOT VERY USEFUL
+    #percentile = 0.50
+    #print(df.shape)
+    #q_budget = df['budget'].quantile(percentile)
+    #df = df[df['budget'] > q_budget]
+    #print(df.shape)
 
     columns_to_filter = ["popularity", "runtime", "vote_average",
                          "budget", "vote_count"]
-    print("Filtering the dataframe using only the data with has no NAN value " +\
+    print("Filtering the dataframe using only the data that has no NaN values " +\
        "for the columns:\n {}".format(columns_to_filter))
     print("  Shape before filtering: ", df.shape)
     for item in columns_to_filter:
-        #print(item, " ", df[item].isnull().sum())
+        print(item, " ", df[item].isnull().sum())
         df = df[df[item].notnull()]
     #df = df[(df["is_successfull"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
     #        & (df["vote_average"].notnull()) & (df["budget"].notnull())]
     print("  Shape after filtering: ", df.shape)
     
-    print("Is any colum with NaN: ")
-    print(df.isnull().any())
-    print("\n")
+    # Prints all columns and True/False whether it constains NaN values
+    #print("Columns with/without NaN: ")
+    #print(df.isnull().any())
+    #print("\n")
+
+    show_columns_with_nan(df)
+
+    print("  The columns of the dataframe are: ")
+    print(df.columns)
 
     return df
 
@@ -201,6 +226,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
 
 
     # Test 2.2 - Decision tree or gradient boosting classification
+    print("Predicting the success of the movies using classification ...")
     X = df.drop(columns="is_successfull")
     y = df["is_successfull"]
     test_decision_tree_classification_with_cv(X, y)
@@ -211,13 +237,17 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     #sns.barplot(x=clf.feature_importances_, y=X.columns)
 
     # Test 2.3 - Regression tree, liear regression and boosting - NEEDS IMPROVEMENTS
-   df["revenue"] = movies_metadata_dataframe["revenue"].replace(0.0, np.nan)
-    print(df[df['revenue'].isnull()].shape)
-    df = df[(df['revenue'].notnull())]
-    print("The shape of the dataframe is: ", df.shape)
-    print("Is any colum with NaN: ")
-    print(df.isnull().any())
-    print("\n")
+    print("\nPredicting revenue using regression ...")
+    print("  The shape of the dataframe before filtering is: ", df.shape)
+    df["revenue"] = movies_metadata_dataframe["revenue"]
+    print("  The revenue values equal to 0 are: ", df[df["revenue"] == 0.0]["revenue"].count())
+    print("  Replacing the revenue's 0 values with NaN ...")
+    df["revenue"].replace(0.0, np.nan, inplace=True)
+    print("  The revenue values that are NaN are: ", df[df['revenue'].isnull()].shape)
+    print("  Filtering the datafram by the revenue values that are not NaN ...")
+    df = df[df['revenue'].notnull()]
+    print("  The shape of the dataframe after filtering is: ", df.shape)
+    show_columns_with_nan(df)
     #X_train, X_test, y_train, y_test = train_test_split(df.drop(columns="revenue"),
     #                                                   df["revenue"],
     #                                                   test_size=0.33,
@@ -289,20 +319,44 @@ def main():
     movies_metadata_file_path = "files/the-movies-dataset/movies_metadata.csv"
     credits_file_path = "files/the-movies-dataset/credits.csv"
     ratings_file_path = "files/the-movies-dataset/ratings_small.csv"
+    imdb_movies_file_path = "files/imdb/imdb.csv"
 
     print("Reading movies data ...")
 
-    # Read the movies metadata data
+    # Reads the movies metadata data
     print("  Reading the movies' metadata ...")
     movies_metadata_dataframe = read_data(movies_metadata_file_path)
 
-    # Read the ratings data
+    # Reads the ratings data
     print("  Reading the movies' ratings ...")
     ratings_dataframe = read_data(ratings_file_path)
 
-    # Read the credits data
+    # Reads the credits data
     print("  Reading the movies' credits ...")
     credits_dataframe = read_data(credits_file_path)
+
+    # Reads the imdb movies data
+    #print("  Reading the imdb movies' credits ...")
+    #imdb_movies_dataframe = read_data(imdb_movies_file_path)
+
+    # Gets data from the imdb_movies_movies_dataframe
+    #test_imdb = imdb_movies_dataframe[["tid","nrOfWins", "nrOfNominations"]]
+    #repaired_test_imdb = []
+    #for index, item in enumerate(imdb_movies_dataframe["nrOfWins"]):
+    #    try:
+    #        if item.isdigit():
+    #            repaired_test_imdb.append(item)
+    #        else:
+    #            other = imdb_movies_dataframe.at[index,"nrOfNominations"]
+    #            repaired_test_imdb.append(other)
+    #    except :
+    #        repaired_test_imdb.append(np.nan)
+            
+    #test_imdb["nrOfWins"] = pd.Series(repaired_test_imdb)
+    #movies_metadata_dataframe = movies_metadata_dataframe_old.join(test_imdb.drop(columns="nrOfNominations"))
+
+    #print(len(movies_metadata_dataframe["wins_count"]))
+    #print(movies_metadata_dataframe["wins_count"].isnull().sum())
 
     # Preprocesses the movies' metadata
     movies_metadata_dataframe = preprocess_movies_metadata(movies_metadata_dataframe, False)

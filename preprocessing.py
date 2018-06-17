@@ -66,7 +66,7 @@ def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
         It fills the invalid data with the mean of the data if full_na = true.
         Calls the appropriate function when checking if the data is float
     """
-    # print("  Prepocessing the {0} data ...".format(column_name))
+    # print("  Preprocessing the {0} data ...".format(column_name))
     if is_float:
         column_data = edit_data_values(dataframe[column_name], "float")
     else:
@@ -90,8 +90,14 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     # Print the shape of the dataframe
     print("  Movies metadata dataframe shape before preprocessing: {0}".format(movies_metadata_dataframe.shape))
 
+    # Removing useless columns
+    columns_to_remove = ["homepage", "imdb_id", "original_title", "overview", "poster_path",
+                         "tagline", "video", "adult"]
+    print("  Removing useless columns : {0}".format(columns_to_remove))
+    movies_metadata_dataframe = movies_metadata_dataframe.drop(columns_to_remove, axis=1)
+
     # Parsing release_date data
-    print("  Prepocessing the release_date data ...")
+    print("  Preprocessing the release_date data ...")
     release_date_data = movies_metadata_dataframe["release_date"]
     day_of_week_data = []
     month_data = []
@@ -115,14 +121,6 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     movies_metadata_dataframe["month"] = pd.Series(month_data)
     movies_metadata_dataframe["year"] = pd.Series(year_data)
 
-    #is_friday_data = [datetime.datetime.strptime(date, "%m/%d/%Y").weekday() if date != np.nan else -1 for date in release_date_data ]
-
-    # Removing useless columns
-    columns_to_remove = ["homepage", "imdb_id", "original_title", "overview", "poster_path",
-                         "tagline", "video", "adult"]
-    print("  Removing useless columns : {0}".format(columns_to_remove))
-    movies_metadata_dataframe = movies_metadata_dataframe.drop(columns_to_remove, axis=1)
-
     # Parsing production_companies data
     print("  Preprocessing the production_companies data ...")
     movies_metadata_dataframe["production_companies"] = parse_data_in_column(movies_metadata_dataframe, "production_companies", "name")
@@ -136,7 +134,7 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     movies_metadata_dataframe["genres"] = parse_data_in_column(movies_metadata_dataframe, "genres", "name")
 
     # Parsing belongs_to_collection data
-    print("  Prepocessing the belongs_to_collection data ...")
+    print("  Preprocessing the belongs_to_collection data ...")
     movies_metadata_dataframe["belongs_to_collection"] = parse_data_in_column(movies_metadata_dataframe, "belongs_to_collection", "name")
 
     #one_hot_multilabled_genres_dataframe =\
@@ -160,19 +158,19 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     # Preprocessing the vote_count data
     print("  Preprocessing the vote_count data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "vote_count", False, fill_na)
-    #print(runtime_data.isnull().any())
-    #print(runtime_data.isnull())
-    #print(movies_metadata_dataframe["runtime"].describe())
+    #print(vote_count_data.isnull().any())
+    #print(vote_count_data.isnull())
+    #print(movies_metadata_dataframe["vote_count"].describe())
 
     # Preprocessing the runtime data
-    print("  Preprocessing the revenue data ...")
+    print("  Preprocessing the runtime data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "runtime", False, fill_na)
     #print(runtime_data.isnull().any())
     #print(runtime_data.isnull())
     #print(movies_metadata_dataframe["runtime"].describe())
 
     # Preprocessing the popularity data
-    print("  Prepocessing the popularity data ...")
+    print("  Preprocessing the popularity data ...")
     #popularity_data = movies_metadata_dataframe["popularity"].astype("float")
     preprocess_dataset_column(movies_metadata_dataframe, "popularity", True, fill_na)
     #print(movies_metadata_dataframe["popularity"].describe())
@@ -181,11 +179,17 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     print("  Preprocessing the revenue data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "revenue", False, fill_na)
     #print(movies_metadata_dataframe["revenue"].describe())
+    #movies_small_revenue = movies_metadata_dataframe[movies_metadata_dataframe["revenue"] <= 1]
+    #print(movies_small_revenue["revenue"].count())
+    #print(movies_small_revenue[["release_date", "title", "revenue"]].head(20))
 
     # Preprocessing the budget data
     print("  Preprocessing the budget data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "budget", False, fill_na)
     #print(movies_metadata_dataframe["budget"].describe())
+    #movies_small_budget = movies_metadata_dataframe[movies_metadata_dataframe["revenue"] <= 1]
+    #print(movies_small_budget["budget"].count())
+    #print(movies_small_budget[["release_date", "title", "budget"]].head(20))
 
     # Print the dataframe
     #print("Print movies' metadata dataframe:")
