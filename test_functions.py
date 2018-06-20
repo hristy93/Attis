@@ -119,7 +119,9 @@ def test_gradient_boosting_classification(X_train, X_test, y_train, y_test, max_
     result = gbc.score(X_test, y_test)
     print("Score: ".format(result))
 
-    # Plots the importance of the features - NOT WORKING
+    # Plots the importance of the features
+    # YOU MUST ADD A BREAKPOINT AND STEP ON THE
+    # SECOND LINE IN ORDER TO VEW THE PLOT
     plt.figure(figsize=(15,20))
     sns.barplot(x=gbc.feature_importances_, y=X_train.columns)
 
