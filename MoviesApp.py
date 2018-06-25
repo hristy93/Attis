@@ -62,9 +62,9 @@ def get_directors_data_by_movie_id(credits_dataframe, movie_id):
        return {-1:""}
     return director_data
 
-def read_data(file_path):
+def read_data(file_path, encoding='utf-8'):
     """ Reads the dara from a file path = file_path and returns a dataset """
-    dataframe = pd.read_csv(file_path, low_memory=False)
+    dataframe = pd.read_csv(file_path, low_memory=False, encoding=encoding)
     return dataframe
 
 def get_categorical_data_encoder(data):

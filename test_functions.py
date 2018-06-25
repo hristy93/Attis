@@ -124,6 +124,7 @@ def test_gradient_boosting_classification(X_train, X_test, y_train, y_test, max_
     # SECOND LINE IN ORDER TO VEW THE PLOT
     plt.figure(figsize=(15,20))
     sns.barplot(x=gbc.feature_importances_, y=X_train.columns)
+    plt.show()
 
 def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
     """ Tests a gradient boosting classification with partial (X) and 
