@@ -283,6 +283,8 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
                                                        test_size=0.33,
                                                        random_state=42)
 
+    test_naive_bayes(X_train, X_test, y_train, y_test)
+
     test_gradient_boosting_classification(X_train, X_test, y_train, y_test)
 
     # Test 2.3 - Regression tree, liear regression and boosting - NEEDS IMPROVEMENTS
