@@ -92,8 +92,8 @@ def test_decision_tree_regression_with_cv(X, y, max_depth=2):
 
 
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
-    """ Tests a gradient boosting regression with some some training 
-        (X_train, y_train) and testing (X_test, y_test) data 
+    """ Tests a gradient boosting regression with some some training
+        (X_train, y_train) and testing (X_test, y_test) data
     """
     print("\nTesting GradientBoostingRegressor ...")
     gbr = GradientBoostingRegressor()

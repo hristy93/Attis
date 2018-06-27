@@ -146,11 +146,11 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     df["runtime"] = movies_metadata_dataframe["runtime"]
     #df["runtime"] = df['runtime'].fillna(df['runtime'].mean())
     df["popularity"] = movies_metadata_dataframe["popularity"]
-    df["is_english"] = movies_metadata_dataframe["is_english"]
+    #df["is_english"] = movies_metadata_dataframe["is_english"]
     # Released on friday - 4 == Friday
-    df["is_released_on_friday"] = movies_metadata_dataframe["day_of_week"].apply(lambda x: 1 if x == 4 else 0)
+    #df["is_released_on_friday"] = movies_metadata_dataframe["day_of_week"].apply(lambda x: 1 if x == 4 else 0)
     # Released in summer - 6 == June, 7 == July, 8 == August
-    df["is_released_in_summer"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [6, 7, 8, 11] else 0)
+    #df["is_released_in_summer"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [6, 7, 8, 11] else 0)
     # Released on hoiday - 4 == April, 5 === May, 6 == June, 11 == November
     df["is_released_on_holiday"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [4, 5, 6] else 0)
     df["vote_average"] = movies_metadata_dataframe["vote_average"]
@@ -158,7 +158,10 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     #df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
     df["budget"] = movies_metadata_dataframe["budget"].apply(scale_small_values)
     df["vote_count"] = movies_metadata_dataframe["vote_count"]
-    df["year"] = movies_metadata_dataframe["year"]
+
+    # There is an improvement of 0.7% on the 
+    # gradient boosting classificatior without the year
+    #df["year"] = movies_metadata_dataframe["year"] 
 
     # New features from the imdb movies file
     #df["nrOfWins"] = movies_metadata_dataframe["nrOfWins"]
@@ -217,6 +220,7 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     print("Filtering the dataframe using only the data that has no NaN values " +\
        "for the columns:\n {}".format(columns_to_filter))
     print("  Shape before filtering: ", df.shape)
+    print("  The NaN values in each column are: ")
     for item in columns_to_filter:
         print(item, " ", df[item].isnull().sum())
         df = df[df[item].notnull()]
@@ -428,7 +432,7 @@ def extract_and_repair_data_from_new_file(imdb_movies_dataframe):
 
 def add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe, movies_metadata_dataframe):
     """ Adds the the imdb movies data to the imdb_movies_dataframe """
-    test_imdb = imdb_movies_dataframe[["tid","nrOfWins", "nrOfNominations", "nrOfPhotos",
+    test_imdb = imdb_movies_dataframe[["tid", "nrOfWins", "nrOfNominations", "nrOfPhotos",
                                       "nrOfNewsArticles", "nrOfUserReviews"]]
     repaired_nrOfWins, repaired_nrOfNominations, repaired_nrOfPhotos, repaired_nrOfNewsArticles, repaired_nrOfUserReviews =\
        extract_and_repair_data_from_new_file(imdb_movies_dataframe)
@@ -438,11 +442,11 @@ def add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe, movies_m
     test_imdb["nrOfPhotos"] = edit_data_values(repaired_nrOfPhotos)
     test_imdb["nrOfNewsArticles"] = edit_data_values(repaired_nrOfNewsArticles)
     test_imdb["nrOfnrOfUserReviews"] = edit_data_values(repaired_nrOfUserReviews)
-    print(test_imdb["nrOfWins"].describe())
-    print(test_imdb["nrOfNominations"].describe())
-    print(test_imdb["nrOfPhotos"].describe())
-    print(test_imdb["nrOfNewsArticles"].describe())
-    print(test_imdb["nrOfUserReviews"].describe())
+    #print(test_imdb["nrOfWins"].describe())
+    #print(test_imdb["nrOfNominations"].describe())
+    #print(test_imdb["nrOfPhotos"].describe())
+    #print(test_imdb["nrOfNewsArticles"].describe())
+    #print(test_imdb["nrOfUserReviews"].describe())
     movies_metadata_dataframe = movies_metadata_dataframe.copy().join(test_imdb)
     return movies_metadata_dataframe
 
@@ -472,8 +476,8 @@ def main():
     imdb_movies_dataframe = read_data(imdb_movies_file_path)
 
     # Adds the the imdb movies data to the imds_movies_dataframe
-    movies_metadata_dataframe = add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe,
-                                                                            movies_metadata_dataframe)
+    #movies_metadata_dataframe = add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe,
+    #                                                                        movies_metadata_dataframe)
 
     #print(len(movies_metadata_dataframe["wins_count"]))
     #print(movies_metadata_dataframe["wins_count"].isnull().sum())
