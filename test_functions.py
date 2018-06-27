@@ -3,6 +3,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
+from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -91,6 +92,20 @@ def test_decision_tree_regression_with_cv(X, y, max_depth=2):
     #show_cross_validation_score(best_estimator, X, y)
 
 
+def test_naive_bayes(X_train, X_test, y_train, y_test):
+    """ Tests Gaussian Naive Bayes with some some training
+        (X_train, y_train) and testing (X_test, y_test) data
+    """
+    print("\nTesting GaussianNaiveBayes...")
+    g = GaussianNB()
+    g.fit(X_train, y_train)
+    GaussianNB(priors=None)
+    y_gpred = g.predict(X_test)
+
+    score = accuracy_score(y_test, y_gpred)
+    print("Score: {score}".format(score=score))
+
+
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
     """ Tests a gradient boosting regression with some some training
         (X_train, y_train) and testing (X_test, y_test) data
@@ -124,6 +139,7 @@ def test_gradient_boosting_classification(X_train, X_test, y_train, y_test, max_
     # SECOND LINE IN ORDER TO VEW THE PLOT
     plt.figure(figsize=(15,20))
     sns.barplot(x=gbc.feature_importances_, y=X_train.columns)
+    plt.show()
 
 def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
     """ Tests a gradient boosting classification with partial (X) and 
