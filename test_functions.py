@@ -3,7 +3,6 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -16,23 +15,13 @@ from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
 import matplotlib.pyplot as plt
 import seaborn as sns
-import statistics as s
 import math
+from utils import show_cross_validation_score
 
 def get_best_estmator(estimator, parameters, X, y):
     gscv = GridSearchCV(estimator, parameters, return_train_score=True)
     best_estimator = gscv.fit(X, y)
     return best_estimator
-
-def show_cross_validation_score(classificator, X, y):
-    """ Shows the 10-fold cross validation scores and their 
-        average using the classificator and some partial (X) 
-        and target (y) values 
-    """
-    k_fold_count = 10
-    scores = cross_val_score(classificator, X, y, cv=k_fold_count, n_jobs=-1)
-    print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
-    print("  Average score: {0}".format(s.mean(scores)))
 
 def soft_acc(y_true, y_pred):
     return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
@@ -90,20 +79,6 @@ def test_decision_tree_regression_with_cv(X, y, max_depth=2):
     #best_estimator = get_best_estmator(dtr_entropy, parameters, X, y)
     #print("  Scores after hyper-parameter optimizer:")
     #show_cross_validation_score(best_estimator, X, y)
-
-
-def test_naive_bayes(X_train, X_test, y_train, y_test):
-    """ Tests Gaussian Naive Bayes with some some training
-        (X_train, y_train) and testing (X_test, y_test) data
-    """
-    print("\nTesting GaussianNaiveBayes...")
-    g = GaussianNB()
-    g.fit(X_train, y_train)
-    GaussianNB(priors=None)
-    y_gpred = g.predict(X_test)
-
-    score = accuracy_score(y_test, y_gpred)
-    print("Score: {score}".format(score=score))
 
 
 def test_gradient_boosting_regression(X_train, X_test, y_train, y_test):
