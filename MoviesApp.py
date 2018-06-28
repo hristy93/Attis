@@ -1,140 +1,14 @@
 import ast
-import datetime
-import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from sklearn.naive_bayes import BernoulliNB, GaussianNB
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import MultiLabelBinarizer
 import sys
 
 from test_functions import *
 from preprocessing import *
+from utils import *
+from naive_bayes import *
 
-def enable_win_unicode_console():
-    try:
-        # Fix UTF8 output issues on Windows console.
-        # Does nothing if package is not installed
-        from win_unicode_console import enable
-        enable()
-    except ImportError:
-        pass
-
-def plot_dataframe(dataframe, column_name):
-    """ Plots a dataframe's column by name (column_name) 
-        with numeric values
-    """
-    dataframe[column_name].plot()
-    plt.show()
-
-def get_ratings_by_movie_id(ratings_dataframe, movie_id):
-    """ Gets the ratings for a movie by id (movie_id) """ 
-    user_ratings = ratings_dataframe[ratings_dataframe["movieId"] == movie_id]['rating']
-    return user_ratings
-
-def get_actors_data_by_movie_id(credits_dataframe, movie_id):
-    """ Gets the actors data for a movie by id (movie_id) """
-    if not movie_id.isdigit():
-        return {-1:""}
-    raw_cast_data = credits_dataframe[credits_dataframe["id"] == int(movie_id)]["cast"]
-    cast_data = ast.literal_eval(raw_cast_data.iloc[0])
-    actors_data = {actor["id"]: actor["name"] for actor in cast_data}
-    #print(cast_data)
-    if not cast_data:
-        director_data = {-1:""}
-    return actors_data
-
-def get_directors_data_by_movie_id(credits_dataframe, movie_id):
-    """ Gets the directors data for a movie by id (movie_id) """
-    if not movie_id.isdigit():
-        return  {-1:""}
-    try:
-        raw_crew_data = credits_dataframe[credits_dataframe["id"] == int(movie_id)]["crew"]
-        if raw_crew_data.empty:
-            return {-1:""}
-        crew_data = ast.literal_eval(raw_crew_data.iloc[0])
-        director_data = {crew["id"]: crew["name"] for crew in crew_data if crew["job"] == "Director"}
-        #print(crew_data)
-        if not crew_data:
-            return {-1:""}
-    except:
-       return {-1:""}
-    return director_data
-
-def read_data(file_path, encoding='utf-8'):
-    """ Reads the dara from a file path = file_path and returns a dataset """
-    dataframe = pd.read_csv(file_path, low_memory=False, encoding=encoding)
-    return dataframe
-
-def get_categorical_data_encoder(data):
-    """ Gets the encoded binary data into categorical """
-    le = LabelEncoder()
-    le.fit(data)
-    #fitted_tittle = le.transform(movies_metadata_dataframe["title"][0:4])
-    #list(le.inverse_transform([2, 2, 1]))
-    return le
-
-def get_all_actors_data(credits_dataframe, movies_metadata_dataframe):
-    """ Gets the whole actors' data from the dataframes """
-    movies_metadata_dataframe_ids = movies_metadata_dataframe["id"].values
-    all_actors_data = list()
-    for id in movies_metadata_dataframe_ids:
-        result = get_actors_data_by_movie_id(credits_dataframe, id)
-        if not result:
-            all_actors_data.append(np.nan)
-        else:
-            all_actors_data.append(result.values())
-    return all_actors_data
-
-def get_all_directors_data(credits_dataframe, movies_metadata_dataframe):
-    """ Gets the whole directors' data from the dataframes """
-    movies_metadata_dataframe_ids = movies_metadata_dataframe["id"].values
-    all_directors_data = list()
-    for id in movies_metadata_dataframe_ids:
-        result = get_directors_data_by_movie_id(credits_dataframe, id)
-        if not result:
-            all_directors_data.append(np.nan) 
-        else:
-            all_directors_data.append(list(result.keys())[0]) 
-    return all_directors_data
-
-def get_one_hot_multilabled_dataframe(data_values, column_name):
-    """ Parses the data_values into a one-hot multilabeled 
-        dataframe that can be used in the algorthms
-    """
-    #df = pd.DataFrame(columns=[column_name])
-    #for item in data_values:
-    #    df = df.append({column_name :item}, ignore_index=True )
-    
-    mlb = MultiLabelBinarizer()
-    mlb_result = mlb.fit_transform(data_values[column_name])
-    #df1 = pd.DataFrame(mlb_result, columns=mlb.classes_, index=data_values.index)
-    df1 = pd.DataFrame(mlb_result, columns=mlb.classes_)
-    #print("One-hot mulilabled dataframe of columnn {0}:".format(column_name))
-    #print(df1)
-    #print("\n")
-    return df1
-
-def show_columns_with_nan(dataframe):
-    """ Prints the columns names of the dataframe which have NaN values"""
-    print("  Is any column with NaN: ")
-    columns_with_nan = dataframe.columns[dataframe.isnull().any()]
-    if columns_with_nan != []:
-        print(dataframe.columns[dataframe.isnull().any()])
-        print("\n")
-    else:
-        print("    No")
-
-def scale_small_values(value):
-    """ Scales the value up """
-    if value < 100:
-        return value * 1000000
-    elif value in range(100, 1000):
-        return value * 1000
-    else:
-        return value
 
 def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     """ Creates a dataframe for testing """
@@ -242,268 +116,6 @@ def create_testing_dataframe(movies_metadata_dataframe, credits_dataframe):
     #print("Columns with/without NaN: ")
     #print(df.isnull().any())
     #print("\n")
-
-    show_columns_with_nan(df)
-
-    print("  The columns of the dataframe are: ")
-    print(df.columns)
-
-    return df
-
-
-def naive_bayes(movies_metadata_dataframe, credits_dataframe):
-    df = create_naive_bayes_dataframe_gaussian(movies_metadata_dataframe, credits_dataframe)
-
-    X = df.drop(columns="is_successful")
-    y = df["is_successful"]
-
-    test_naive_bayes_with_cv(X, y, cls=GaussianNB)
-
-    # TEST BernoulliNB
-    df = create_naive_bayes_dataframe_bernouli(movies_metadata_dataframe, credits_dataframe)
-
-    X = df.drop(columns="is_successful")
-    y = df["is_successful"]
-
-    test_naive_bayes_with_cv(X, y, cls=BernoulliNB)
-
-
-def create_naive_bayes_dataframe_gaussian(movies_metadata_dataframe, credits_dataframe):
-    """ Creates a dataframe for testing Naive Bayes"""
-    print("\nCreating a testing dataframe for the algorithms ...")
-    df = pd.DataFrame()
-
-    # VERY IMPORTANT!!!!
-    df["runtime"] = movies_metadata_dataframe["runtime"]
-    df["runtime"] = df['runtime'].fillna(df['runtime'].mean())
-    df["popularity"] = movies_metadata_dataframe["popularity"]
-    df["is_english"] = movies_metadata_dataframe["is_english"]
-    df["vote_average"] = movies_metadata_dataframe["vote_average"]
-    df['vote_average'].replace(np.nan, 0.0, inplace=True)
-    df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
-    df["budget"] = movies_metadata_dataframe["budget"].apply(scale_small_values)
-    df["vote_count"] = movies_metadata_dataframe["vote_count"]
-
-    mean_budget = movies_metadata_dataframe['budget'].mean()
-    print("Mean budget for all movies", mean_budget)
-    df["is_big_budget"] = movies_metadata_dataframe["budget"].apply(lambda b: b > mean_budget)
-    df["is_enourmous_budget"] = movies_metadata_dataframe["budget"].apply(lambda b: b > 1.3*mean_budget)
-    df["is_low_budget"] = movies_metadata_dataframe["budget"].apply(lambda b: b < 0.75 * mean_budget)
-
-    #   10-fold cross validation scores: [0.60839955 0.59818388 0.61066969 0.63481229 0.63481229 0.68600683
-    #  0.7076223  0.73037543 0.72354949 0.66439135]
-    #   Average score: 0.6598823087323201
-
-    # df["production_companies"] = movies_metadata_dataframe[
-    #     "production_companies"].apply(lambda x: len(x))
-    # df["production_countries"] = movies_metadata_dataframe[
-    #     "production_countries"].apply(lambda x: len(x))
-    # df["genres"] = movies_metadata_dataframe["genres"].apply(lambda x: len(x))
-    # df["belongs_to_collection"] = movies_metadata_dataframe[
-    #     "belongs_to_collection"].apply(lambda x: len(x))
-    # Released on friday - 4 == Friday
-    # df["is_released_on_friday"] = movies_metadata_dataframe[
-    #     "day_of_week"].apply(lambda x: 1 if x == 4 else 0)
-    # Released in summer - 6 == June, 7 == July, 8 == August
-    # df["is_released_in_summer"] = movies_metadata_dataframe["month"].apply(
-    #     lambda x: 1 if x in [6, 7, 8, 11] else 0)
-    df["is_released_in_winter"] = movies_metadata_dataframe["month"].apply(
-        lambda x: 1 if x in [10, 11, 12, 1, 2, 3] else 0)
-
-    # Released on holiday - 4 == April, 5 === May, 6 == June, 11 == November
-    # df["is_released_on_holiday"] = movies_metadata_dataframe["month"].apply(
-    #     lambda x: 1 if x in [4, 5, 6] else 0)
-    # df["year"] = movies_metadata_dataframe["year"]
-
-    # # New features from the imdb movies file - VERY SLOW !!!
-    # df["nrOfWins"] = movies_metadata_dataframe["nrOfWins"]
-    # df["nrOfNominations"] = movies_metadata_dataframe["nrOfNominations"]
-    # df["nrOfPhotos"] = movies_metadata_dataframe["nrOfPhotos"]
-    # df["nrOfNewsArticles"] = movies_metadata_dataframe["nrOfNewsArticles"]
-    # df["nrOfUserReviews"] = movies_metadata_dataframe["nrOfUserReviews"]
-
-    return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / \
-                  movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    df['is_successful'] = return_data.apply(lambda x: 1 if x >= 1 else 0)
-    # print(df[df['is_successful'].isnull()].shape)
-
-    ## Get the actors count - VERY SLOW !!!
-    # print("  Getting the actors count data ...")
-    # raw_cast_data = credits_dataframe["cast"]
-    # actors_count_data = [len(ast.literal_eval(item)) for item in raw_cast_data.values]
-    # df["actors_count"] = pd.Series(actors_count_data)
-
-    ## Get the crew count - VERY SLOW !!!
-    # print("  Getting the crew count data ...")
-    # raw_crew_data = credits_dataframe["crew"]
-    # crew_count_data = [len(ast.literal_eval(item)) for item in raw_crew_data.values]
-    # df["crew_count"] = pd.Series(crew_count_data)
-
-    # Filtering the budget using only the values
-    # greater than some percetile of the data - NOT VERY USEFUL
-    # percentile = 0.50
-    # print(df.shape)
-    # q_budget = df['budget'].quantile(percentile)
-    # df = df[df['budget'] > q_budget]
-    # print(df.shape)
-
-    columns_to_filter = [
-        "popularity",
-        "vote_average",
-        "runtime",
-        "budget",
-        "vote_count"
-    ]
-
-    # New columns from the imdb movies file
-    # new_columns = ["nrOfWins", "nrOfNominations",
-    #                     "nrOfPhotos", "nrOfNewsArticles", "nrOfUserReviews"]
-    # columns_to_filter.extend(new_columns)
-
-    print(
-        "Filtering the dataframe using only the data that has no NaN values " + \
-        "for the columns:\n {}".format(columns_to_filter))
-    print("  Shape before filtering: ", df.shape)
-    for item in columns_to_filter:
-        print(item, " ", df[item].isnull().sum())
-        df = df[df[item].notnull()]
-    # df = df[(df["is_successful"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
-    #        & (df["vote_average"].notnull()) & (df["budget"].notnull())]
-    print("  Shape after filtering: ", df.shape)
-
-    # Prints all columns and True/False whether it constains NaN values
-    # print("Columns with/without NaN: ")
-    # print(df.isnull().any())
-    # print("\n")
-
-    show_columns_with_nan(df)
-
-    print("  The columns of the dataframe are: ")
-    print(df.columns)
-
-    return df
-
-
-def create_naive_bayes_dataframe_bernouli(movies_metadata_dataframe, credits_dataframe):
-    """ Creates a dataframe for testing Naive Bayes"""
-    print("\nCreating a testing dataframe for the algorithms ...")
-    df = pd.DataFrame()
-
-    # VERY IMPORTANT!!!!
-    # df["runtime"] = movies_metadata_dataframe["runtime"]
-    # df["runtime"] = df['runtime'].fillna(df['runtime'].mean())
-    # df["popularity"] = movies_metadata_dataframe["popularity"]
-    df["is_english"] = movies_metadata_dataframe["is_english"]
-    # df["vote_average"] = movies_metadata_dataframe["vote_average"]
-    # df['vote_average'].replace(np.nan, 0.0, inplace=True)
-    # df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
-    # df["budget"] = movies_metadata_dataframe["budget"].apply(scale_small_values)
-    mean_budget = movies_metadata_dataframe['budget'].mean()
-    print("Mean budget for all movies", mean_budget)
-    df["is_big_budget"] = movies_metadata_dataframe["budget"].apply(lambda b: b > mean_budget)
-    df["is_enourmous_budget"] = movies_metadata_dataframe["budget"].apply(lambda b: b > 1.3*mean_budget)
-    # df["vote_count"] = movies_metadata_dataframe["vote_count"]
-
-    #   10-fold cross validation scores: [0.60839955 0.59818388 0.61066969 0.63481229 0.63481229 0.68600683
-    #  0.7076223  0.73037543 0.72354949 0.66439135]
-    #   Average score: 0.6598823087323201
-
-    # df["production_companies"] = movies_metadata_dataframe[
-    #     "production_companies"].apply(lambda x: len(x))
-    # df["production_countries"] = movies_metadata_dataframe[
-    #     "production_countries"].apply(lambda x: len(x))
-    # df["genres"] = movies_metadata_dataframe["genres"].apply(lambda x: len(x))
-    df["belongs_to_collection"] = movies_metadata_dataframe[
-        "belongs_to_collection"].apply(lambda x: len(x))
-    # Released on friday - 4 == Friday
-    df["is_released_on_friday"] = movies_metadata_dataframe[
-        "day_of_week"].apply(lambda x: 1 if x == 4 else 0)
-    # Released in summer - 6 == June, 7 == July, 8 == August
-    df["is_released_in_summer"] = movies_metadata_dataframe["month"].apply(
-        lambda x: 1 if x in [6, 7, 8, 11] else 0)
-
-
-    # Released on holiday - 4 == April, 5 === May, 6 == June, 11 == November
-    df["is_released_in_winter"] = movies_metadata_dataframe["month"].apply(
-        lambda x: 1 if x in [10, 11, 12, 1, 2, 3] else 0)
-    # df["year"] = movies_metadata_dataframe["year"]
-
-    # # New features from the imdb movies file - VERY SLOW !!!
-    # df["nrOfWins"] = movies_metadata_dataframe["nrOfWins"]
-    # df["nrOfNominations"] = movies_metadata_dataframe["nrOfNominations"]
-    # df["nrOfPhotos"] = movies_metadata_dataframe["nrOfPhotos"]
-    # df["nrOfNewsArticles"] = movies_metadata_dataframe["nrOfNewsArticles"]
-    # df["nrOfUserReviews"] = movies_metadata_dataframe["nrOfUserReviews"]
-
-    return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / \
-                  movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    df['is_successful'] = return_data.apply(lambda x: 1 if x >= 1 else 0)
-    # print(df[df['is_successful'].isnull()].shape)
-
-    ## Get the actors count - VERY SLOW !!!
-    # print("  Getting the actors count data ...")
-    # raw_cast_data = credits_dataframe["cast"]
-    # actors_count_data = [len(ast.literal_eval(item)) for item in raw_cast_data.values]
-    # df["actors_count"] = pd.Series(actors_count_data)
-
-    ## Get the crew count - VERY SLOW !!!
-    # print("  Getting the crew count data ...")
-    # raw_crew_data = credits_dataframe["crew"]
-    # crew_count_data = [len(ast.literal_eval(item)) for item in raw_crew_data.values]
-    # df["crew_count"] = pd.Series(crew_count_data)
-
-    # Adds some of the genres as a separate column
-    genres_one_hot = get_one_hot_multilabled_dataframe(
-        movies_metadata_dataframe, "genres")
-    print(genres_one_hot.columns)
-    colums_to_remove = ["Aniplex", "BROSTA TV",
-                        "Carousel Productions", "GoHands", "Sentai Filmworks",
-                        "The Cartel",
-                        "Vision View Entertainment", "Sentai Filmworks",
-                        "Rogue State",
-                        "Mardock Scramble Production Committee", "GoHands",
-                        "Odyssey Media",
-                        "Pulser Productions",
-                        "Telescene Film Group Productions"]
-    genres_one_hot_filted = genres_one_hot.drop(columns=colums_to_remove)
-    df = df.join(genres_one_hot_filted)
-
-    # Filtering the budget using only the values
-    # greater than some percetile of the data - NOT VERY USEFUL
-    # percentile = 0.50
-    # print(df.shape)
-    # q_budget = df['budget'].quantile(percentile)
-    # df = df[df['budget'] > q_budget]
-    # print(df.shape)
-
-    columns_to_filter = [
-        # "popularity",
-        # "vote_average",
-        # "runtime",
-        # "budget",
-        # "vote_count"
-    ]
-
-    # New columns from the imdb movies file
-    # new_columns = ["nrOfWins", "nrOfNominations",
-    #                     "nrOfPhotos", "nrOfNewsArticles", "nrOfUserReviews"]
-    # columns_to_filter.extend(new_columns)
-
-    print(
-        "Filtering the dataframe using only the data that has no NaN values " + \
-        "for the columns:\n {}".format(columns_to_filter))
-    print("  Shape before filtering: ", df.shape)
-    for item in columns_to_filter:
-        print(item, " ", df[item].isnull().sum())
-        df = df[df[item].notnull()]
-    # df = df[(df["is_successful"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
-    #        & (df["vote_average"].notnull()) & (df["budget"].notnull())]
-    print("  Shape after filtering: ", df.shape)
-
-    # Prints all columns and True/False whether it constains NaN values
-    # print("Columns with/without NaN: ")
-    # print(df.isnull().any())
-    # print("\n")
 
     show_columns_with_nan(df)
 
@@ -623,6 +235,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     #test = movies_metadata_dataframe["vote_average"].values
     #print(var)
 
+
 def remove_movies_with_less_votes(dataframe, percentile):
     """ Removes the movies with less vote count than the percentile """
     print("Filtering the movies with less vote count than the percentile = {} ...".format(percentile))
@@ -639,6 +252,7 @@ def remove_movies_with_less_votes(dataframe, percentile):
     dataframe = dataframe[dataframe["vote_count"] > votes_count_limit]
     print("  The movies after filtering: {0}".format(len(dataframe)))
     return dataframe
+
 
 def extract_and_repair_data_from_new_file(imdb_movies_dataframe):
     """ Extracts and repairs the data from the imdb movies file """
@@ -703,6 +317,7 @@ def extract_and_repair_data_from_new_file(imdb_movies_dataframe):
             repaired_nrOfUserReviews.append(np.nan)
     return (repaired_nrOfWins, repaired_nrOfNominations, repaired_nrOfPhotos, repaired_nrOfNewsArticles, repaired_nrOfUserReviews)
 
+
 def add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe, movies_metadata_dataframe):
     """ Adds the the imdb movies data to the imdb_movies_dataframe """
     test_imdb = imdb_movies_dataframe[["tid","nrOfWins", "nrOfNominations", "nrOfPhotos",
@@ -722,6 +337,7 @@ def add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe, movies_m
     print(test_imdb["nrOfUserReviews"].describe())
     movies_metadata_dataframe = movies_metadata_dataframe.copy().join(test_imdb)
     return movies_metadata_dataframe
+
 
 def main():
     movies_metadata_test_file_path = "movies_metadata_test.csv"
