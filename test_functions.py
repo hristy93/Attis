@@ -11,6 +11,7 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV
+from sklearn import tree
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
 import matplotlib.pyplot as plt
@@ -26,18 +27,28 @@ def get_best_estmator(estimator, parameters, X, y):
 def soft_acc(y_true, y_pred):
     return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
 
+def get_the_generated_tree_structure(tree_estimator, file_name):
+    """ Gets the structure of the generated tree by the tree_estimator
+        into the file called file_name
+        Need to go to the website http://webgraphviz.com/ to visualize the tree
+    """
+    with open(file_name, "w") as f:
+        f = tree.export_graphviz(tree_estimator, out_file=f)
+
 def test_decision_tree_classification(X_train, X_test, y_train, y_test):
     """ Tests a decision tree classification with some training 
         (X_train, y_train) and testing (X_test, y_test) data 
     """
     print("\nTesting DecisionTreeClassifier ...")
+    #dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100)
     dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
         max_depth=3, min_samples_leaf=5)
     dtc_entropy.fit(X_train, y_train)
-    y_pred = clf_entropy.predict(X_test)
+    y_pred = dtc_entropy.predict(X_test)
     result = accuracy_score(y_test, y_pred)
     print("Accuracy_score: ", accuracy_score(y_test, y_pred))
     print("Classification_report:\n", classification_report(y_test, y_pred))
+    get_the_generated_tree_structure(dtc_entropy, "decision_tree_classifier.txt")
     print(result)
 
 def test_decision_tree_classification_with_cv(X, y):
@@ -45,6 +56,7 @@ def test_decision_tree_classification_with_cv(X, y):
         target (y) values using cross validation
     """
     print("\nTesting DecisionTreeClassifier with cross valdiation ...")
+    #dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100)
     dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
         max_depth=2, min_samples_leaf=2)
     show_cross_validation_score(dtc_entropy, X, y)

@@ -151,3 +151,21 @@ def get_all_directors_data(credits_dataframe, movies_metadata_dataframe):
         else:
             all_directors_data.append(list(result.keys())[0])
     return all_directors_data
+
+
+def remove_movies_with_less_votes(dataframe, percentile):
+    """ Removes the movies with less vote count than the percentile """
+    print("Filtering the movies with less vote count than the percentile = {} ...".format(percentile))
+    #all_votes_count = movies_metadata_dataframe["vote_count"].values.astype('int')
+    all_votes_count = dataframe[dataframe["vote_count"].notnull()]['vote_count'].astype('int')
+    #all_votes_count_edited = [int(item) for item in all_votes_count]
+    #average_votes_count = sum(all_votes_count_edited)/float(len(all_votes_count_edited))
+    #all_votes_count_filtered_ids = [index for index, item in enumerate(all_votes_count_edited)
+    #                               if item > average_votes_count]
+    votes_count_limit = all_votes_count.quantile(percentile)
+    print("  The {0} percentile of all vote counts: {1}".format(percentile, votes_count_limit))
+    #print(votes_count_limit)
+    print("  The movies count before filtering: {0}".format(len(dataframe)))
+    dataframe = dataframe[dataframe["vote_count"] > votes_count_limit]
+    print("  The movies after filtering: {0}".format(len(dataframe)))
+    return dataframe

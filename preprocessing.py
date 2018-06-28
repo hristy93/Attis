@@ -219,3 +219,66 @@ def preprocess_movies_credits(credits_dataframe):
     print("  {0}".format(credits_dataframe.shape))
 
     return credits_dataframe
+
+def extract_and_repair_data_from_new_file(imdb_movies_dataframe):
+    """ Extracts and repairs the data from the imdb movies file """
+    repaired_nrOfWins = []
+    repaired_nrOfNominations = []
+    repaired_nrOfPhotos = []
+    repaired_nrOfNewsArticles = []
+    repaired_nrOfUserReviews = []
+    nrOfWins_items = imdb_movies_dataframe["nrOfWins"]
+    for index, item in enumerate(nrOfWins_items):
+        column = 10;
+        try:
+            if item.isdigit():
+                if int(item) > 1000:
+                    next_item = imdb_movies_dataframe.at[index, "nrOfNominations"]
+                    if not next_item.isdigit():
+                        column += 2;
+                    else:
+                        column += 3;
+            else:
+                column += 1;
+            new_item = imdb_movies_dataframe.iat[index, column]
+            #if not new_item.isdigit():
+            #    print("error")
+            repaired_nrOfWins.append(new_item)
+            next_item = imdb_movies_dataframe.iat[index, column + 1]
+            repaired_nrOfNominations.append(next_item)
+            second_next_item = imdb_movies_dataframe.iat[index, column + 2]
+            repaired_nrOfPhotos.append(second_next_item)
+            third_next_item = imdb_movies_dataframe.iat[index, column + 3]
+            repaired_nrOfNewsArticles.append(third_next_item)
+            fourth_next_item = imdb_movies_dataframe.iat[index, column + 4]
+            repaired_nrOfUserReviews.append(fourth_next_item)
+            #print(new_item, next_item, second_next_item, third_next_item, "\n")
+        except:
+            repaired_nrOfWins.append(np.nan)
+            repaired_nrOfNominations.append(np.nan)
+            repaired_nrOfPhotos.append(np.nan)
+            repaired_nrOfNewsArticles.append(np.nan)
+            repaired_nrOfUserReviews.append(np.nan)
+    return (repaired_nrOfWins, repaired_nrOfNominations, repaired_nrOfPhotos,
+           repaired_nrOfNewsArticles, repaired_nrOfUserReviews)
+
+def add_new_columns_from_imdb_movies_dataframe(imdb_movies_dataframe, dataframe):
+    """ Adds the the imdb movies data to the imdb_movies_dataframe """
+    test_imdb = imdb_movies_dataframe[["tid", "nrOfWins", "nrOfNominations", "nrOfPhotos",
+                                      "nrOfNewsArticles", "nrOfUserReviews"]]
+    repaired_nrOfWins, repaired_nrOfNominations, repaired_nrOfPhotos, repaired_nrOfNewsArticles, repaired_nrOfUserReviews =\
+       extract_and_repair_data_from_new_file(imdb_movies_dataframe)
+            
+    test_imdb["nrOfWins"] = edit_data_values(repaired_nrOfWins)
+    test_imdb["nrOfNominations"] = edit_data_values(repaired_nrOfNominations)
+    test_imdb["nrOfPhotos"] = edit_data_values(repaired_nrOfPhotos)
+    test_imdb["nrOfNewsArticles"] = edit_data_values(repaired_nrOfNewsArticles)
+    test_imdb["nrOfnrOfUserReviews"] = edit_data_values(repaired_nrOfUserReviews)
+    #print(test_imdb["nrOfWins"].describe())
+    #print(test_imdb["nrOfNominations"].describe())
+    #print(test_imdb["nrOfPhotos"].describe())
+    #print(test_imdb["nrOfNewsArticles"].describe())
+    #print(test_imdb["nrOfUserReviews"].describe())
+    dataframe = dataframe.copy().join(test_imdb)
+    return dataframe
+
