@@ -8,6 +8,7 @@ from test_functions import *
 from preprocessing import *
 from utils import *
 from naive_bayes import *
+from svm_classifier import *
 from decision_regression_trees import *
 
 
@@ -194,6 +195,7 @@ def main():
     # Tests decision tree with some data
     test_algorithms(movies_metadata_dataframe, credits_dataframe)
     naive_bayes(movies_metadata_dataframe, credits_dataframe)
+    test_svm(movies_metadata_dataframe, credits_dataframe)
 
     # Plots a dataframe
     #plot_dataframe(movies_metadata_dataframe, "vote_count")
