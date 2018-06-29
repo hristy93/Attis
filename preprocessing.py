@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 from dateutil.parser import parse
 
-def edit_data_values(data_values, value_type = "int"):
+def edit_data_values(data_values, value_type = "int", zero_to_nan=True):
     """ Edits the values of the data (data_values) depending
         on whether their type (value_type) is int or float 
     """
     data_values_edited = []
     for item in data_values:
         # Makes all data with the value of 0 to be NaN
-        if item == '0' or item == 0 or item == 0.0:
+        if zero_to_nan and item == '0' or item == 0 or item == 0.0:
            item = np.nan
         if isinstance(item, str):
             if value_type == "float":
@@ -24,19 +24,10 @@ def edit_data_values(data_values, value_type = "int"):
                 else:
                     item = np.nan
         #else:
-        #    #item = sum(float_data_edited)/float(len(float_data_edited)
-        #    item = np.nan
+        #    # Replaces the item with the mean of all data values
+        #    item = sum(float_data_edited)/float(len(float_data_edited)
 
         data_values_edited.append(item)
-
-    #if value_type == "int":
-    #    data_values_series = pd.Series(data_values_edited, dtype=np.int32)
-    #else:
-    #    data_values_series = pd.Series(data_values_edited, dtype=np.float)
-
-    #print(data_values_series.head(10))
-    #data_values_edited_series = data_values_series[data_values_series != np.nan].astype(value_type)
-    #return data_values_edited_series
 
     data_values_series = pd.Series(data_values_edited)
     return data_values_series
@@ -66,7 +57,6 @@ def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
         It fills the invalid data with the mean of the data if full_na = true.
         Calls the appropriate function when checking if the data is float
     """
-    # print("  Preprocessing the {0} data ...".format(column_name))
     if is_float:
         column_data = edit_data_values(dataframe[column_name], "float")
     else:
@@ -76,18 +66,21 @@ def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
         # Fills the NaN values with the mean of all values in the column
         column_data_mean = column_data[column_data != np.nan].mean()
         column_data = column_data.fillna(column_data_mean)
-        #if is_float:
-        #    column_data = column_data.fillna(column_data_mean)
-        #else:
-        #    column_data = column_data.fillna(int(column_data_mean))
 
     dataframe[column_name] = column_data
+
+def get_directors_ids(column):
+    for item in column:
+        if item['job'] == 'Director':
+            return item['id']
+        else:
+            return np.nan
 
 def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     """ Preprocesses the movies metadata """
     print("\nPreprocessing movies' metadata ...")
 
-    # Print the shape of the dataframe
+    # Prints the shape of the dataframe
     print("  Movies metadata dataframe shape before preprocessing: {0}".format(movies_metadata_dataframe.shape))
 
     # Removing useless columns
@@ -104,7 +97,6 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     year_data = []
     for date in release_date_data:
         if isinstance(date, str):
-            #day_of_week_number = datetime.datetime.strptime(date, "%m/%d/%Y").weekday()
             parsed_date = parse(date)
             day_of_week_number = parsed_date.weekday()
             month_number = parsed_date.month
@@ -123,22 +115,24 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
 
     # Parsing production_companies data
     print("  Preprocessing the production_companies data ...")
-    movies_metadata_dataframe["production_companies"] = parse_data_in_column(movies_metadata_dataframe, "production_companies", "name")
+    movies_metadata_dataframe["production_companies"] = parse_data_in_column(movies_metadata_dataframe,
+                                                                            "production_companies", "name")
 
     # Parsing production_countries data
     print("  Preprocessing the production_countries data ...")
-    movies_metadata_dataframe["production_countries"] = parse_data_in_column(movies_metadata_dataframe, "production_countries", "name")
+    movies_metadata_dataframe["production_countries"] = parse_data_in_column(movies_metadata_dataframe,
+                                                                            "production_countries", "name")
 
     # Parsing genres data
     print("  Preprocessing the genres data ...")
-    movies_metadata_dataframe["genres"] = parse_data_in_column(movies_metadata_dataframe, "genres", "name")
+    movies_metadata_dataframe["genres"] = parse_data_in_column(movies_metadata_dataframe,
+                                                              "genres", "name")
 
     # Parsing belongs_to_collection data
     print("  Preprocessing the belongs_to_collection data ...")
-    movies_metadata_dataframe["belongs_to_collection"] = parse_data_in_column(movies_metadata_dataframe, "belongs_to_collection", "name")
-
-    #one_hot_multilabled_genres_dataframe =\
-    #    get_one_hot_multilabled_dataframe(movies_metadata_dataframe["genres"], "genres")
+    movies_metadata_dataframe["belongs_to_collection"] = parse_data_in_column(movies_metadata_dataframe,
+                                                                             "belongs_to_collection",
+                                                                             "name")
 
     # Preprocessing the original_language data
     print("  Preprocessing the original_language data ...")
@@ -147,53 +141,30 @@ def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     is_english_data = [0 if item != "en" else 1 for item in original_language_data_values]
     is_english_data_series = pd.Series(is_english_data);
     movies_metadata_dataframe["is_english"] = is_english_data_series
-    #print(movies_metadata_dataframe["is_english"].describe())
 
     # Preprocessing the vote_average data
     print("  Preprocessing the vote_average data ...")
-    #vote_average_data = movies_metadata_dataframe["vote_average"].astype("float")
     preprocess_dataset_column(movies_metadata_dataframe, "vote_average", True, fill_na)
-    #print(movies_metadata_dataframe["vote_average"].describe())
 
     # Preprocessing the vote_count data
     print("  Preprocessing the vote_count data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "vote_count", False, fill_na)
-    #print(vote_count_data.isnull().any())
-    #print(vote_count_data.isnull())
-    #print(movies_metadata_dataframe["vote_count"].describe())
 
     # Preprocessing the runtime data
     print("  Preprocessing the runtime data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "runtime", False, fill_na)
-    #print(runtime_data.isnull().any())
-    #print(runtime_data.isnull())
-    #print(movies_metadata_dataframe["runtime"].describe())
 
     # Preprocessing the popularity data
     print("  Preprocessing the popularity data ...")
-    #popularity_data = movies_metadata_dataframe["popularity"].astype("float")
     preprocess_dataset_column(movies_metadata_dataframe, "popularity", True, fill_na)
-    #print(movies_metadata_dataframe["popularity"].describe())
 
     # Preprocessing the revenue data
     print("  Preprocessing the revenue data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "revenue", False, fill_na)
-    #print(movies_metadata_dataframe["revenue"].describe())
-    #movies_small_revenue = movies_metadata_dataframe[movies_metadata_dataframe["revenue"] <= 1]
-    #print(movies_small_revenue["revenue"].count())
-    #print(movies_small_revenue[["release_date", "title", "revenue"]].head(20))
 
     # Preprocessing the budget data
     print("  Preprocessing the budget data ...")
     preprocess_dataset_column(movies_metadata_dataframe, "budget", False, fill_na)
-    #print(movies_metadata_dataframe["budget"].describe())
-    #movies_small_budget = movies_metadata_dataframe[movies_metadata_dataframe["revenue"] <= 1]
-    #print(movies_small_budget["budget"].count())
-    #print(movies_small_budget[["release_date", "title", "budget"]].head(20))
-
-    # Print the dataframe
-    #print("Print movies' metadata dataframe:")
-    #print(movies_metadata_dataframe)
 
     # Print the shape of the dataframe
     print("  Movies metadata dataframe shape after preprocessing: {0}".format(movies_metadata_dataframe.shape))
@@ -213,6 +184,11 @@ def preprocess_movies_credits(credits_dataframe):
     # Print the movies' credits dataframe
     #print("Print credits dataframe:")
     #print(credits_dataframe)
+
+    # Preprocessing the dirctors data
+    #credits_dataframe['crew'] = credits_dataframe['crew'].apply(ast.literal_eval)
+    #directors_data = credits_dataframe['crew'].apply(get_directors_ids)
+    #credits_dataframe["directors"] = pd.Series(directors_data)
 
     # Print the shape of the dataframe
     print("  Credits dataframe shape:")
@@ -241,8 +217,6 @@ def extract_and_repair_data_from_new_file(imdb_movies_dataframe):
             else:
                 column += 1;
             new_item = imdb_movies_dataframe.iat[index, column]
-            #if not new_item.isdigit():
-            #    print("error")
             repaired_nrOfWins.append(new_item)
             next_item = imdb_movies_dataframe.iat[index, column + 1]
             repaired_nrOfNominations.append(next_item)
@@ -252,7 +226,6 @@ def extract_and_repair_data_from_new_file(imdb_movies_dataframe):
             repaired_nrOfNewsArticles.append(third_next_item)
             fourth_next_item = imdb_movies_dataframe.iat[index, column + 4]
             repaired_nrOfUserReviews.append(fourth_next_item)
-            #print(new_item, next_item, second_next_item, third_next_item, "\n")
         except:
             repaired_nrOfWins.append(np.nan)
             repaired_nrOfNominations.append(np.nan)
@@ -269,16 +242,12 @@ def add_new_columns_from_imdb_movies_dataframe(imdb_movies_dataframe, dataframe)
     repaired_nrOfWins, repaired_nrOfNominations, repaired_nrOfPhotos, repaired_nrOfNewsArticles, repaired_nrOfUserReviews =\
        extract_and_repair_data_from_new_file(imdb_movies_dataframe)
             
-    test_imdb["nrOfWins"] = edit_data_values(repaired_nrOfWins)
-    test_imdb["nrOfNominations"] = edit_data_values(repaired_nrOfNominations)
-    test_imdb["nrOfPhotos"] = edit_data_values(repaired_nrOfPhotos)
-    test_imdb["nrOfNewsArticles"] = edit_data_values(repaired_nrOfNewsArticles)
-    test_imdb["nrOfnrOfUserReviews"] = edit_data_values(repaired_nrOfUserReviews)
-    #print(test_imdb["nrOfWins"].describe())
-    #print(test_imdb["nrOfNominations"].describe())
-    #print(test_imdb["nrOfPhotos"].describe())
-    #print(test_imdb["nrOfNewsArticles"].describe())
-    #print(test_imdb["nrOfUserReviews"].describe())
+    test_imdb["nrOfWins"] = edit_data_values(repaired_nrOfWins, zero_to_nan=False)
+    test_imdb["nrOfNominations"] = edit_data_values(repaired_nrOfNominations, zero_to_nan=False)
+    test_imdb["nrOfPhotos"] = edit_data_values(repaired_nrOfPhotos, zero_to_nan=False)
+    test_imdb["nrOfNewsArticles"] = edit_data_values(repaired_nrOfNewsArticles, zero_to_nan=False)
+    test_imdb["nrOfnrOfUserReviews"] = edit_data_values(repaired_nrOfUserReviews, zero_to_nan=False)
+
     dataframe = dataframe.copy().join(test_imdb)
     return dataframe
 

@@ -19,13 +19,15 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #df["is_released_on_friday"] = movies_metadata_dataframe["day_of_week"].apply(lambda x: 1 if x == 4 else 0)
     # Released in summer - 6 == June, 7 == July, 8 == August
     #df["is_released_in_summer"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [6, 7, 8, 11] else 0)
-    # Released on hoiday - 4 == April, 5 === May, 6 == June, 11 == November
+    # Released on hoiday - 4 == April, 5 == May, 6 == June, 11 == November
     #df["is_released_on_holiday"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [4, 5, 6] else 0)
     df["vote_average"] = movies_metadata_dataframe["vote_average"]
     #df['vote_average'].replace(np.nan, 0.0, inplace=True)
     #df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
     df["budget"] = movies_metadata_dataframe["budget"].apply(scale_small_values)
+    #df["directors"] = credits_dataframe["directors"]
 
+    # Filters the budget by some proportion of its mean
     # mean_budget = movies_metadata_dataframe['budget'].mean()
     # print("Mean budget for all movies", mean_budget)
     # df["is_big_budget"] = movies_metadata_dataframe["budget"].apply(
@@ -35,6 +37,8 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     # df["is_low_budget"] = movies_metadata_dataframe["budget"].apply(
     #     lambda b: b < 0.75 * mean_budget)
 
+    # Released in winter - 10 == October, 11 == November, 12 == December, 1 == January,
+    # 2 == February, 3 == March
     #df["is_released_in_winter"] = movies_metadata_dataframe["month"].apply(
     #    lambda x: 1 if x in [10, 11, 12, 1, 2, 3] else 0)
 
@@ -80,18 +84,18 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #df["crew_count"] = pd.Series(crew_count_data)
     
     # Adds some of the genres as a separate column
-    genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
-    print(genres_one_hot.columns)
-    colums_to_remove = ["Aniplex", "BROSTA TV",
-       "Carousel Productions", "GoHands", "Sentai Filmworks", "The Cartel",
-       "Vision View Entertainment",  "Sentai Filmworks", "Rogue State",
-       "Mardock Scramble Production Committee", "GoHands", "Odyssey Media",
-       "Pulser Productions", "Telescene Film Group Productions"]
-    genres_one_hot_filted = genres_one_hot.drop(columns=colums_to_remove)
-    df = df.join(genres_one_hot_filted)
+    #genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
+    #print(genres_one_hot.columns)
+    #colums_to_remove = ["Aniplex", "BROSTA TV",
+    #   "Carousel Productions", "GoHands", "Sentai Filmworks", "The Cartel",
+    #   "Vision View Entertainment",  "Sentai Filmworks", "Rogue State",
+    #   "Mardock Scramble Production Committee", "GoHands", "Odyssey Media",
+    #   "Pulser Productions", "Telescene Film Group Productions"]
+    #genres_one_hot_filted = genres_one_hot.drop(columns=colums_to_remove)
+    #df = df.join(genres_one_hot_filted)
 
-    # Filters the movies based on vote_count colum and a percentile limit - NOT VERY USEFUL
-    #percentile = 0.25
+    # Filters the movies based on vote_count colum and a percentile limit - LITTLE IMPROVEMENT
+    #percentile = 0.20
     #df = remove_movies_with_less_votes(df, percentile)
 
     # Filtering the budget using only the values 
@@ -103,7 +107,7 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #print(df.shape)
 
     columns_to_filter = ["popularity", "runtime", "vote_average",
-                         "budget", "vote_count"]
+                         "budget", "vote_count", "directors"]
 
     # New columns from the imdb movies file
     #new_columns = ["nrOfWins", "nrOfNominations",
@@ -118,8 +122,6 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
         if item in df.columns:
             print(item, " ", df[item].isnull().sum())
             df = df[df[item].notnull()]
-    #df = df[(df["is_successful"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
-    #        & (df["vote_average"].notnull()) & (df["budget"].notnull())]
     print("  Shape after filtering: ", df.shape)
     
     # Prints all columns and True/False whether it constains NaN values
