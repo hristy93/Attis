@@ -54,8 +54,6 @@ def test_decision_tree_classification(X_train, X_test, y_train, y_test):
     print("Classification_report:\n", classification_report(y_test, y_pred))
     get_the_generated_tree_structure(dtc_entropy, "decision_tree_classifier.txt")
     print(result)
-    #with open("fruit_classifier.txt", "w") as f:
-    #    f = tree.export_graphviz(dtc_entropy, out_file=f)
 
 def test_decision_tree_classification_with_cv(X, y):
     """ Tests a decision tree classification with partial (X) and 
@@ -67,6 +65,7 @@ def test_decision_tree_classification_with_cv(X, y):
         max_depth=2, min_samples_leaf=2)
     show_cross_validation_score(dtc_entropy, X, y)
 
+    # Shows the best estimator based on the parameters
     #parameters = {"criterion":("entropy", "gini"), "min_samples_leaf":[1, 10],
     #             "min_samples_split":[2, 10], "max_depth":[2, 10]}
     #best_estimator = get_best_estmator(dtc_entropy, parameters, X, y)
@@ -92,6 +91,7 @@ def test_decision_tree_regression_with_cv(X, y, max_depth=2):
     dtr_entropy = DecisionTreeRegressor(max_depth=max_depth)
     show_cross_validation_score(dtr_entropy, X, y)
 
+    # Shows the best estimator based on the parameters
     #parameters = {"criterion":("mse", "mae", "friedman_mse"), "min_samples_leaf":[1, 10],
     #             "min_samples_split":[2, 10], "max_depth":[2, 10]}
     #best_estimator = get_best_estmator(dtr_entropy, parameters, X, y)
@@ -128,8 +128,6 @@ def test_gradient_boosting_classification(X_train, X_test, y_train, y_test, max_
     print("Score: ".format(result))
 
     # Plots the importance of the features
-    # YOU MUST ADD A BREAKPOINT AND STEP ON THE
-    # SECOND LINE IN ORDER TO VEW THE PLOT
     plt.figure(figsize=(15,20))
     sns.barplot(x=gbc.feature_importances_, y=X_train.columns)
     plt.show()
@@ -142,6 +140,7 @@ def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
     gbc = GradientBoostingClassifier(max_depth=max_depth)
     show_cross_validation_score(gbc, X, y)
 
+    # Shows the best estimator based on the parameters
     #parameters = {"learning_rate":[0.1, 0.9]}
     #best_estimator = get_best_estmator(gbc, parameters, X, y)
     #print("  Scores after hyper-parameter optimizer:")
@@ -162,13 +161,16 @@ def test_association_rules(dataframe, support=0.6):
     frequent_itemsets['length'] = frequent_itemsets['itemsets'].apply(lambda x: len(x))
     print("  Frequent itemsets:")
     print(frequent_itemsets)
+
     rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
     print("  Association rules:")
     print(rules.head())
+
     refined_frequent_itemsets = frequent_itemsets[(frequent_itemsets['length'] == 2) &
                                 (frequent_itemsets['support'] >= 0.8) ]
     print("  Refined frequent itemsets:")
     print(refined_frequent_itemsets)
+
     refined_rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
     print("  Refined association rules:")
     print(refined_rules.head())

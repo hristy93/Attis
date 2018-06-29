@@ -87,16 +87,13 @@ def main():
     #movies_metadata_dataframe = add_new_columns_from_imdb_movies_dataframe(imdb_movies_dataframe,
     #                                                                      movies_metadata_dataframe)
 
-    #print(len(movies_metadata_dataframe["wins_count"]))
-    #print(movies_metadata_dataframe["wins_count"].isnull().sum())
-
     # Preprocesses the movies' metadata
     movies_metadata_dataframe = preprocess_movies_metadata(movies_metadata_dataframe, False)
 
     # Preprocesses the movies' credits
     credits_dataframe = preprocess_movies_credits(credits_dataframe)
 
-    # Tests decision tree with some data
+    # Tests algorithms with some data
     test_algorithms(movies_metadata_dataframe, credits_dataframe)
     naive_bayes(movies_metadata_dataframe, credits_dataframe)
     test_svm(movies_metadata_dataframe, credits_dataframe)
