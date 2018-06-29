@@ -4,6 +4,8 @@ from sklearn.naive_bayes import BernoulliNB, GaussianNB
 
 from utils import *
 
+from decision_regression_trees import create_trees_testing_dataframe
+
 
 def test_naive_bayes_with_cv(X, y, cls):
     """ Tests Gaussian Naive Bayes with some some training
@@ -15,7 +17,7 @@ def test_naive_bayes_with_cv(X, y, cls):
 
 
 def naive_bayes(movies_metadata_dataframe, credits_dataframe):
-    df = create_naive_bayes_dataframe_gaussian(movies_metadata_dataframe, credits_dataframe)
+    df = create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
 
     X = df.drop(columns="is_successful")
     y = df["is_successful"]
@@ -23,7 +25,7 @@ def naive_bayes(movies_metadata_dataframe, credits_dataframe):
     test_naive_bayes_with_cv(X, y, cls=GaussianNB)
 
     # TEST BernoulliNB
-    df = create_naive_bayes_dataframe_bernouli(movies_metadata_dataframe, credits_dataframe)
+    df = create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
 
     X = df.drop(columns="is_successful")
     y = df["is_successful"]
