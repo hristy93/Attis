@@ -452,12 +452,31 @@ def add_new_columns_to_movies_metadata_dataframe(imdb_movies_dataframe, movies_m
     movies_metadata_dataframe = movies_metadata_dataframe.copy().join(test_imdb)
     return movies_metadata_dataframe
 
+def process_keywords(keywords_dataframe):
+    bags_of_keywords = [kvp_words
+       for bag_of_words in keywords_dataframe["keywords"]
+           for kvp_words in ast.literal_eval(bag_of_words)]
+    count_of_all = len(bags_of_keywords)
+    unique_keywords = { kvp_words["id"]: kvp_words["name"].replace(" ", "_")
+                      for kvp_words in bags_of_keywords }
+    count_of_unique = len(unique_keywords)
+
+    #keywords = [keyword for keyword in unique_keywords.values()]
+
+
+
+    print(unique_keywords)
+
 def main():
     movies_metadata_test_file_path = "movies_metadata_test.csv"
     movies_metadata_file_path = "files/the-movies-dataset/movies_metadata.csv"
     credits_file_path = "files/the-movies-dataset/credits.csv"
     ratings_file_path = "files/the-movies-dataset/ratings_small.csv"
+    keywords_file_path = "files/the-movies-dataset/keywords.csv"
     imdb_movies_file_path = "files/imdb/imdb.csv"
+
+    #keywords_dataframe = read_data(keywords_file_path)
+    #process_keywords(keywords_dataframe)
 
     print("Reading movies data ...")
 

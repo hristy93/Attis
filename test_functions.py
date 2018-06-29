@@ -1,3 +1,4 @@
+from sklearn import tree
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
@@ -45,11 +46,14 @@ def test_decision_tree_classification(X_train, X_test, y_train, y_test):
     dtc_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100,
         max_depth=3, min_samples_leaf=5)
     dtc_entropy.fit(X_train, y_train)
-    y_pred = clf_entropy.predict(X_test)
-    result = accuracy_score(y_test, y_pred)
-    print("Accuracy_score: ", accuracy_score(y_test, y_pred))
-    print("Classification_report:\n", classification_report(y_test, y_pred))
-    print(result)
+    #y_pred = clf_entropy.predict(X_test)
+    #result = accuracy_score(y_test, y_pred)
+    #print("Accuracy_score: ", accuracy_score(y_test, y_pred))
+    #print("Classification_report:\n", classification_report(y_test, y_pred))
+    #print(result)
+    
+    with open("fruit_classifier.txt", "w") as f:
+        f = tree.export_graphviz(dtc_entropy, out_file=f)
 
 def test_decision_tree_classification_with_cv(X, y):
     """ Tests a decision tree classification with partial (X) and 
