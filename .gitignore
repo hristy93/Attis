@@ -265,3 +265,12 @@ envAttis/*
 # Movies data - .csv files
 files/*
 /figure1.png
+
+# PyProj
+*.pyproj
+
+# Solutions
+*.sln
+
+# Text files
+*.txt

@@ -12,7 +12,7 @@
     <OutputPath>.</OutputPath>
     <Name>MoviesApp</Name>
     <RootNamespace>MoviesApp</RootNamespace>
-    <InterpreterId>MSBuild|envAttis|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -39,15 +39,6 @@
     <Compile Include="utils.py" />
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="envAttis\">
-      <Id>envAttis</Id>
-      <Version>3.6</Version>
-      <Description>envAttis (Python 3.6 (64-bit))</Description>
-      <InterpreterPath>Scripts\python.exe</InterpreterPath>
-      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
-      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
-      <Architecture>X64</Architecture>
-    </Interpreter>
     <Interpreter Include="env\">
       <Id>env</Id>
       <Version>3.5</Version>
