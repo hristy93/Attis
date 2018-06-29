@@ -59,6 +59,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
                                                        random_state=42)
 
     test_gradient_boosting_classification(X_train, X_test, y_train, y_test)
+    test_decision_tree_classification(X_train, X_test, y_train, y_test)
 
     # Test 2.3 - Regression tree, liear regression and boosting - NEEDS IMPROVEMENTS
     print("\nPredicting revenue using regression ...")

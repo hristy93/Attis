@@ -83,6 +83,11 @@ def create_naive_bayes_dataframe_gaussian(movies_metadata_dataframe, credits_dat
 
     return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / \
                   movies_metadata_dataframe['budget'].replace(0.0, np.nan)
+    df["return"] = return_data
+    print("  Shape before filtering: ", df.shape)
+    df = df[df["return"].notnull()]
+    print("  Shape after filtering: ", df.shape)
+    df.drop(columns=["return"], inplace=True)
     df['is_successful'] = return_data.apply(lambda x: 1 if x >= 1 else 0)
     # print(df[df['is_successful'].isnull()].shape)
 
@@ -196,6 +201,11 @@ def create_naive_bayes_dataframe_bernouli(movies_metadata_dataframe, credits_dat
 
     return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / \
                   movies_metadata_dataframe['budget'].replace(0.0, np.nan)
+    df["return"] = return_data
+    print("  Shape before filtering: ", df.shape)
+    df = df[df["return"].notnull()]
+    print("  Shape after filtering: ", df.shape)
+    df.drop(columns=["return"], inplace=True)
     df['is_successful'] = return_data.apply(lambda x: 1 if x >= 1 else 0)
     # print(df[df['is_successful'].isnull()].shape)
 

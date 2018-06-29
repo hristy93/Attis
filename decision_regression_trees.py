@@ -20,7 +20,7 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     # Released in summer - 6 == June, 7 == July, 8 == August
     #df["is_released_in_summer"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [6, 7, 8, 11] else 0)
     # Released on hoiday - 4 == April, 5 === May, 6 == June, 11 == November
-    df["is_released_on_holiday"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [4, 5, 6] else 0)
+    #df["is_released_on_holiday"] = movies_metadata_dataframe["month"].apply(lambda x: 1 if x in [4, 5, 6] else 0)
     df["vote_average"] = movies_metadata_dataframe["vote_average"]
     #df['vote_average'].replace(np.nan, 0.0, inplace=True)
     #df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
@@ -35,8 +35,8 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     # df["is_low_budget"] = movies_metadata_dataframe["budget"].apply(
     #     lambda b: b < 0.75 * mean_budget)
 
-    df["is_released_in_winter"] = movies_metadata_dataframe["month"].apply(
-        lambda x: 1 if x in [10, 11, 12, 1, 2, 3] else 0)
+    #df["is_released_in_winter"] = movies_metadata_dataframe["month"].apply(
+    #    lambda x: 1 if x in [10, 11, 12, 1, 2, 3] else 0)
 
     df["vote_count"] = movies_metadata_dataframe["vote_count"]
 
@@ -51,9 +51,21 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #df["nrOfNewsArticles"] = movies_metadata_dataframe["nrOfNewsArticles"]
     #df["nrOfUserReviews"] = movies_metadata_dataframe["nrOfUserReviews"]
 
-    return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / movies_metadata_dataframe['budget'].replace(0.0, np.nan)
-    df['is_successful'] = return_data.apply(lambda x: 1 if x >=1 else 0)
-    #print(df[df['is_successful'].isnull()].shape)
+    return_data = movies_metadata_dataframe["revenue"].replace(0.0, np.nan) / \
+        movies_metadata_dataframe['budget'].replace(0.0, np.nan)
+    df["return"] = return_data
+    #print("Revenue Nan: ", movies_metadata_dataframe[movies_metadata_dataframe["revenue"].isnull()].shape)
+    #print("budget Nan: ", movies_metadata_dataframe[movies_metadata_dataframe["budget"].isnull()].shape)
+    #print(return_data.describe())
+    #print(df[df["return"].notnull()].shape)
+    print("  Shape before filtering: ", df.shape)
+    df = df[df["return"].notnull()]
+    print("  Shape after filtering: ", df.shape)
+    df.drop(columns=["return"], inplace=True)
+
+    df['is_successful'] = return_data.apply(lambda x: 1 if x >= 1 else 0)
+    #print(df[df['is_successful'].notnull()].shape)
+    #print(df['is_successful'].describe())
     
     ## Get the actors count - VERY SLOW !!!
     #print("  Getting the actors count data ...")
@@ -103,8 +115,9 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     print("  Shape before filtering: ", df.shape)
     print("  The NaN values in each column are: ")
     for item in columns_to_filter:
-        print(item, " ", df[item].isnull().sum())
-        df = df[df[item].notnull()]
+        if item in df.columns:
+            print(item, " ", df[item].isnull().sum())
+            df = df[df[item].notnull()]
     #df = df[(df["is_successful"].notnull()) & (df["popularity"].notnull()) & (df["runtime"].notnull())
     #        & (df["vote_average"].notnull()) & (df["budget"].notnull())]
     print("  Shape after filtering: ", df.shape)
