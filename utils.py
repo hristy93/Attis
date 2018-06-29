@@ -17,13 +17,13 @@ def enable_win_unicode_console():
         pass
 
 
-def show_cross_validation_score(classificator, X, y):
+def show_cross_validation_score(estimator, X, y):
     """ Shows the 10-fold cross validation scores and their
-        average using the classificator and some partial (X)
+        average using the estimator and some partial (X)
         and target (y) values
     """
     k_fold_count = 10
-    scores = cross_val_score(classificator, X, y, cv=k_fold_count, n_jobs=-1)
+    scores = cross_val_score(estimator, X, y, cv=k_fold_count, n_jobs=-1)
     print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
     print("  Average score: {0}".format(s.mean(scores)))
 
@@ -96,7 +96,7 @@ def get_actors_data_by_movie_id(credits_dataframe, movie_id):
 
 def get_directors_data_by_movie_id(credits_dataframe, movie_id):
     """ Gets the directors data for a movie by id (movie_id) """
-    if not movie_id.isdigit():
+    if not str(movie_id).isdigit():
         return  {-1:""}
     try:
         raw_crew_data = credits_dataframe[credits_dataframe["id"] == int(movie_id)]["crew"]
@@ -121,10 +121,10 @@ def read_data(file_path, encoding='utf-8'):
 def get_categorical_data_encoder(data):
     """ Gets the encoded binary data into categorical """
     le = LabelEncoder()
-    le.fit(data)
+    result = le.fit_transform(data)
     #fitted_tittle = le.transform(movies_metadata_dataframe["title"][0:4])
     #list(le.inverse_transform([2, 2, 1]))
-    return le
+    return result
 
 
 def get_all_actors_data(credits_dataframe, movies_metadata_dataframe):

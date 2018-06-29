@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 from dateutil.parser import parse
 
-def edit_data_values(data_values, value_type = "int"):
+def edit_data_values(data_values, value_type = "int", zero_to_nan=True):
     """ Edits the values of the data (data_values) depending
         on whether their type (value_type) is int or float 
     """
     data_values_edited = []
     for item in data_values:
         # Makes all data with the value of 0 to be NaN
-        if item == '0' or item == 0 or item == 0.0:
+        if zero_to_nan and item == '0' or item == 0 or item == 0.0:
            item = np.nan
         if isinstance(item, str):
             if value_type == "float":
@@ -82,6 +82,13 @@ def preprocess_dataset_column(dataframe, column_name, is_float, fill_na):
         #    column_data = column_data.fillna(int(column_data_mean))
 
     dataframe[column_name] = column_data
+
+def get_directors_ids(column):
+    for item in column:
+        if item['job'] == 'Director':
+            return item['id']
+        else:
+            return np.nan
 
 def preprocess_movies_metadata(movies_metadata_dataframe, fill_na = False):
     """ Preprocesses the movies metadata """
@@ -214,6 +221,13 @@ def preprocess_movies_credits(credits_dataframe):
     #print("Print credits dataframe:")
     #print(credits_dataframe)
 
+    # Preprocessing the dirctors data
+    #credits_dataframe['crew'] = credits_dataframe['crew'].apply(ast.literal_eval)
+    #directors_data = credits_dataframe['crew'].apply(get_directors_ids)
+    ##directors = directors_data.fillna(-1)
+    ##directors_encoded = get_categorical_data_encoder(directors)
+    #credits_dataframe["directors"] = pd.Series(directors_data)
+
     # Print the shape of the dataframe
     print("  Credits dataframe shape:")
     print("  {0}".format(credits_dataframe.shape))
@@ -269,16 +283,24 @@ def add_new_columns_from_imdb_movies_dataframe(imdb_movies_dataframe, dataframe)
     repaired_nrOfWins, repaired_nrOfNominations, repaired_nrOfPhotos, repaired_nrOfNewsArticles, repaired_nrOfUserReviews =\
        extract_and_repair_data_from_new_file(imdb_movies_dataframe)
             
-    test_imdb["nrOfWins"] = edit_data_values(repaired_nrOfWins)
-    test_imdb["nrOfNominations"] = edit_data_values(repaired_nrOfNominations)
-    test_imdb["nrOfPhotos"] = edit_data_values(repaired_nrOfPhotos)
-    test_imdb["nrOfNewsArticles"] = edit_data_values(repaired_nrOfNewsArticles)
-    test_imdb["nrOfnrOfUserReviews"] = edit_data_values(repaired_nrOfUserReviews)
+    test_imdb["nrOfWins"] = edit_data_values(repaired_nrOfWins, zero_to_nan=False)
+    test_imdb["nrOfNominations"] = edit_data_values(repaired_nrOfNominations, zero_to_nan=False)
+    test_imdb["nrOfPhotos"] = edit_data_values(repaired_nrOfPhotos, zero_to_nan=False)
+    test_imdb["nrOfNewsArticles"] = edit_data_values(repaired_nrOfNewsArticles, zero_to_nan=False)
+    test_imdb["nrOfnrOfUserReviews"] = edit_data_values(repaired_nrOfUserReviews, zero_to_nan=False)
+
     #print(test_imdb["nrOfWins"].describe())
     #print(test_imdb["nrOfNominations"].describe())
     #print(test_imdb["nrOfPhotos"].describe())
     #print(test_imdb["nrOfNewsArticles"].describe())
     #print(test_imdb["nrOfUserReviews"].describe())
+
+    #print(test_imdb["nrOfWins"].isnull().sum())
+    #print(test_imdb["nrOfNominations"].isnull().sum())
+    #print(test_imdb["nrOfPhotos"].isnull().sum())
+    #print(test_imdb["nrOfNewsArticles"].isnull().sum())
+    #print(test_imdb["nrOfUserReviews"].isnull().sum())
+
     dataframe = dataframe.copy().join(test_imdb)
     return dataframe
 

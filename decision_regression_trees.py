@@ -25,6 +25,7 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #df['vote_average'].replace(np.nan, 0.0, inplace=True)
     #df['vote_average'] = df['vote_average'].fillna(df['vote_average'].mean())
     df["budget"] = movies_metadata_dataframe["budget"].apply(scale_small_values)
+    #df["directors"] = credits_dataframe["directors"]
 
     # mean_budget = movies_metadata_dataframe['budget'].mean()
     # print("Mean budget for all movies", mean_budget)
@@ -80,18 +81,19 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #df["crew_count"] = pd.Series(crew_count_data)
     
     # Adds some of the genres as a separate column
-    genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
-    print(genres_one_hot.columns)
-    colums_to_remove = ["Aniplex", "BROSTA TV",
-       "Carousel Productions", "GoHands", "Sentai Filmworks", "The Cartel",
-       "Vision View Entertainment",  "Sentai Filmworks", "Rogue State",
-       "Mardock Scramble Production Committee", "GoHands", "Odyssey Media",
-       "Pulser Productions", "Telescene Film Group Productions"]
-    genres_one_hot_filted = genres_one_hot.drop(columns=colums_to_remove)
-    df = df.join(genres_one_hot_filted)
+    #genres_one_hot = get_one_hot_multilabled_dataframe(movies_metadata_dataframe, "genres")
+    #print(genres_one_hot.columns)
+    #colums_to_remove = ["Aniplex", "BROSTA TV",
+    #   "Carousel Productions", "GoHands", "Sentai Filmworks", "The Cartel",
+    #   "Vision View Entertainment",  "Sentai Filmworks", "Rogue State",
+    #   "Mardock Scramble Production Committee", "GoHands", "Odyssey Media",
+    #   "Pulser Productions", "Telescene Film Group Productions"]
+    #genres_one_hot_filted = genres_one_hot.drop(columns=colums_to_remove)
+    #df = df.join(genres_one_hot_filted)
 
-    # Filters the movies based on vote_count colum and a percentile limit - NOT VERY USEFUL
-    #percentile = 0.25
+
+    # Filters the movies based on vote_count colum and a percentile limit - LITTLE IMPROVEMENT
+    #percentile = 0.20
     #df = remove_movies_with_less_votes(df, percentile)
 
     # Filtering the budget using only the values 
@@ -103,7 +105,7 @@ def create_trees_testing_dataframe(movies_metadata_dataframe, credits_dataframe)
     #print(df.shape)
 
     columns_to_filter = ["popularity", "runtime", "vote_average",
-                         "budget", "vote_count"]
+                         "budget", "vote_count", "directors"]
 
     # New columns from the imdb movies file
     #new_columns = ["nrOfWins", "nrOfNominations",

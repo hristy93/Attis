@@ -20,6 +20,9 @@ import math
 from utils import show_cross_validation_score
 
 def get_best_estmator(estimator, parameters, X, y):
+    """ Genrerates the best estemator based to the input parameters, 
+    partial (X) and target (y) values
+    """
     gscv = GridSearchCV(estimator, parameters, return_train_score=True)
     best_estimator = gscv.fit(X, y)
     return best_estimator
@@ -135,6 +138,11 @@ def test_gradient_boosting_classification_with_cv(X, y, max_depth=3):
     print("\nTesting GradientBoostingClassifier with cross valdiation ...")
     gbc = GradientBoostingClassifier(max_depth=max_depth)
     show_cross_validation_score(gbc, X, y)
+
+    #parameters = {"learning_rate":[0.1, 0.9]}
+    #best_estimator = get_best_estmator(gbc, parameters, X, y)
+    #print("  Scores after hyper-parameter optimizer:")
+    #show_cross_validation_score(best_estimator, X, y)
 
 def test_linear_regression_with_cv(X, y):
     """ Tests with liear regression with partial (X) and 
