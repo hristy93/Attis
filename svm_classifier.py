@@ -11,13 +11,14 @@ def test_svm(movies_metadata_dataframe, credits_dataframe):
     y = df["is_successful"]
 
     test_svc_with_cv(X, y, cls=svm.SVC)
+    test_svc_with_cv(X, y, cls=svm.LinearSVC, params={'dual': False})
 
 
-def test_svc_with_cv(X, y, cls):
+def test_svc_with_cv(X, y, cls, params={}):
     """ Tests SVM with some some training
         (X_train, y_train) and testing (X_test, y_test) data
     """
     print("\nTesting {} with Radial Basis Function (RBF) as kernel".format(cls.__name__))
     # Radial Basis Function (RBF)
-    classifier = cls()
+    classifier = cls(**params)
     show_cross_validation_score(classifier, X, y)
