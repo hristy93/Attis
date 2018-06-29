@@ -23,13 +23,18 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="decision_regression_trees.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MoviesApp.py" />
+    <Compile Include="naive_bayes.py" />
     <Compile Include="preprocessing.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="test_functions.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="utils.py" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="envAttis\">
