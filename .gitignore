@@ -260,6 +260,8 @@ paket-files/
 __pycache__/
 *.pyc
 env/*
+envAttis/*
 
 # Movies data - .csv files
 files/*
+/figure1.png
