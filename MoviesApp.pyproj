@@ -26,6 +26,8 @@
     <Compile Include="decision_regression_trees.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="features_improement.py" />
+    <Compile Include="instance_based.py" />
     <Compile Include="MoviesApp.py" />
     <Compile Include="naive_bayes.py" />
     <Compile Include="preprocessing.py">

@@ -25,7 +25,10 @@ def show_cross_validation_score(classificator, X, y):
     k_fold_count = 10
     scores = cross_val_score(classificator, X, y, cv=k_fold_count, n_jobs=-1)
     print("  {0}-fold cross validation scores: {1}".format(k_fold_count, scores))
-    print("  Average score: {0}".format(s.mean(scores)))
+    average_score = s.mean(scores)
+    print("  Average score: {0}".format(average_score))
+    
+    return average_score
 
 
 def scale_small_values(value):

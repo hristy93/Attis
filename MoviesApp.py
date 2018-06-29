@@ -9,21 +9,8 @@ from preprocessing import *
 from utils import *
 from naive_bayes import *
 from decision_regression_trees import *
-
-def process_keywords(keywords_dataframe):
-    bags_of_keywords = [kvp_words
-       for bag_of_words in keywords_dataframe["keywords"]
-           for kvp_words in ast.literal_eval(bag_of_words)]
-    count_of_all = len(bags_of_keywords)
-    unique_keywords = { kvp_words["id"]: kvp_words["name"].replace(" ", "_")
-                      for kvp_words in bags_of_keywords }
-    count_of_unique = len(unique_keywords)
-
-    #keywords = [keyword for keyword in unique_keywords.values()]
-
-
-
-    print(unique_keywords)
+from instance_based import *
+from features_improement import *
 
 def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     """ Tests several (decision tree) algorithms usign some dataframes """
@@ -67,6 +54,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
 
     test_decision_tree_classification_with_cv(X, y)
     test_gradient_boosting_classification_with_cv(X, y)
+    test_knn_classification_with_cv(X, y)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                        test_size=0.33,
@@ -96,6 +84,7 @@ def test_algorithms(movies_metadata_dataframe, credits_dataframe):
     test_linear_regression_with_cv(X, y)
     test_decision_tree_regression_with_cv(X, y)
     test_gradient_boosting_regression_with_cv(X, y)
+    test_knn_regression_with_cv(X, y)
 
     # Test 2.4 - Association rules - NOT WORKING (the frequest-items datagrame is empty)
     # The data should be one-hot !!!
